@@ -9,7 +9,16 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "LSApplicationQueriesSchemes": [
+          "metamask",
+          "trust",
+          "safe",
+          "rainbow",
+          "uniswap"
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -32,7 +41,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "./queries.js"
     ],
     "experiments": {
       "typedRoutes": true

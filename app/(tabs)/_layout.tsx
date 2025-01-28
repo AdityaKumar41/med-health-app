@@ -1,43 +1,78 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
-import { Platform } from 'react-native';
+import { Tabs } from "expo-router";
+import React from "react";
+import { Platform } from "react-native";
 
-import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { IconSymbol } from "@/components/ui/IconSymbol";
+import TabBarBackground from "@/components/ui/TabBarBackground";
+// import { Colors } from "@/constants/Colors";
+// import { useColorScheme } from "@/hooks/useColorScheme";
+import "../../global.css";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: 'absolute',
+        tabBarActiveTintColor: "#254EDB",
+        tabBarInactiveTintColor: "#A1A1AA",
+
+        tabBarStyle: {
+          height: 60,
+          paddingBottom: 5,
+          paddingTop: 5,
+          backgroundColor: "#FFFFFF",
+          borderTopWidth: 0.2,
+          borderColor: "#7B7B7B",
+          elevation: 0,
+          shadowColor: "#000",
+
+          shadowOffset: {
+            width: 0,
+            height: -1,
           },
-          default: {},
-        }),
-      }}>
+          shadowOpacity: 0.2,
+          shadowRadius: 5,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontFamily: "Jakarta-SemiBold",
+          fontWeight: "500",
+          marginTop: 1,
+        },
+        tabBarIconStyle: {
+          marginBottom: -5,
+        },
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: "Home",
+          headerShown: false,
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons name="home-filled" size={28} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="history"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: "History",
+          headerShown: false,
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons name="history" size={28} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="chat"
+        options={{
+          title: "Chat",
+          headerShown: false,
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons name="chat" size={28} color={color} />
+          ),
         }}
       />
     </Tabs>
