@@ -5,18 +5,22 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
 import "../global.css";
-
 import "@walletconnect/react-native-compat";
-import "@ethersproject/shims";
-
+import { WagmiProvider } from "wagmi";
+import { polygonAmoy,polygonZkEvmTestnet } from "@wagmi/core/chains";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   createAppKit,
-  defaultConfig,
+  defaultWagmiConfig,
   AppKit,
-} from "@reown/appkit-ethers5-react-native";
+  AppKitButton,
+} from "@reown/appkit-wagmi-react-native";
 
-// 1. Get projectId from https://cloud.reown.com
-const projectId = "a37c22a042ab0cbeac0bf435048b4f74";
+// 0. Setup queryClient
+const queryClient = new QueryClient();
+
+// 1. Get projectId at https://cloud.reown.com
+const projectId = process.env.EXPO_PUBLIC_PROJECT_ID!;
 
 // 2. Create config
 const metadata = {
@@ -26,35 +30,19 @@ const metadata = {
   icons: ["https://avatars.githubusercontent.com/u/179229932"],
   redirect: {
     native: "YOUR_APP_SCHEME://",
+    universal: "YOUR_APP_UNIVERSAL_LINK.com",
   },
 };
 
-const config = defaultConfig({ metadata });
+const chains = [polygonAmoy, polygonZkEvmTestnet] as const;
 
-// 3. Define your chains
-const mainnet = {
-  chainId: 1,
-  name: "Ethereum",
-  currency: "ETH",
-  explorerUrl: "https://etherscan.io",
-  rpcUrl: "https://cloudflare-eth.com",
-};
+const wagmiConfig = defaultWagmiConfig({ chains, projectId, metadata });
 
-const polygon = {
-  chainId: 137,
-  name: "Polygon",
-  currency: "MATIC",
-  explorerUrl: "https://polygonscan.com",
-  rpcUrl: "https://polygon-rpc.com",
-};
-
-const chains = [mainnet, polygon];
-
-// 4. Create modal
+// 3. Create modal
 createAppKit({
   projectId,
-  chains,
-  config,
+  wagmiConfig,
+  defaultChain: polygonAmoy, // Optional
   enableAnalytics: true, // Optional - defaults to your Cloud configuration
 });
 
@@ -70,11 +58,18 @@ export default function RootLayout() {
   });
   return (
     <ThemeProvider value={DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
+      <WagmiProvider config={wagmiConfig}>
+        <QueryClientProvider client={queryClient}>
+          <Stack>
+            <Stack.Screen name="index" options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+            <Stack.Screen name="+not-found" />
+          </Stack>
+          <AppKit />
+          <StatusBar style="dark" />
+        </QueryClientProvider>
+      </WagmiProvider>
     </ThemeProvider>
   );
 }

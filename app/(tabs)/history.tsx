@@ -1,15 +1,15 @@
 import { View, Text } from "react-native";
 import React from "react";
-import { AppKit, AppKitButton } from "@reown/appkit-ethers5-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
 
 const history = () => {
   return (
     <SafeAreaView>
       <View className="items-center justify-center my-auto h-full">
-        <AppKitButton />
-        <AppKit />
+        <Text>Hii</Text>
       </View>
+      <StatusBar style="dark" />
     </SafeAreaView>
   );
 };

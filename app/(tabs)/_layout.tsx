@@ -1,9 +1,5 @@
 import { Tabs } from "expo-router";
 import React from "react";
-import { Platform } from "react-native";
-
-import { IconSymbol } from "@/components/ui/IconSymbol";
-import TabBarBackground from "@/components/ui/TabBarBackground";
 // import { Colors } from "@/constants/Colors";
 // import { useColorScheme } from "@/hooks/useColorScheme";
 import "../../global.css";
@@ -55,6 +51,16 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="chat"
+        options={{
+          title: "Chat",
+          headerShown: false,
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons name="chat" size={28} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="history"
         options={{
           title: "History",
@@ -64,14 +70,13 @@ export default function TabLayout() {
           ),
         }}
       />
-
       <Tabs.Screen
-        name="chat"
+        name="account"
         options={{
-          title: "Chat",
+          title: "Account",
           headerShown: false,
           tabBarIcon: ({ color }) => (
-            <MaterialIcons name="chat" size={28} color={color} />
+            <MaterialIcons name="person" size={28} color={color} />
           ),
         }}
       />

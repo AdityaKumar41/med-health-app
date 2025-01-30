@@ -1,6 +1,7 @@
 import React from "react";
-import { View, Text, Image } from "react-native";
-import type { ServiceCardProps } from "../types";
+import { View, Text, Image, TouchableOpacity } from "react-native";
+import type { ServiceCardProps } from "@/types/index";
+import { Link } from "expo-router";
 
 export const ServiceCard: React.FC<ServiceCardProps> = ({
   bgColor,
@@ -10,9 +11,9 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
   customIcon,
 }) => {
   return (
-    <View
-      className={`flex flex-col self-stretch p-4 my-auto ${bgColor} rounded-xl w-[170px] h-fit`}
-    >
+    <TouchableOpacity
+      className={`flex flex-col self-stretch p-4 my-auto ${bgColor} rounded-xl w-[175px] h-fit`}  >
+    
       {customIcon ? (
         <View className="flex bg-red-100 rounded-lg border border-orange-200 border-solid h-[42px] min-h-[42px] w-[42px]" />
       ) : (
@@ -29,6 +30,6 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
           <Text className="font-Jakarta">{description}</Text>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };

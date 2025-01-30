@@ -7,6 +7,7 @@ import { NavItem } from "@/components/NavItem";
 import { StatusBar } from "expo-status-bar";
 import "../../global.css";
 import { images } from "@/constants/image";
+import { router } from "expo-router";
 
 const services = [
   {
@@ -14,6 +15,7 @@ const services = [
     title: "Book an Apppointment",
     description: "Find a Doctor or specialist",
     imageUri: images.appointment,
+    
   },
   {
     bgColor: "bg-emerald-50",
