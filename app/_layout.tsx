@@ -7,7 +7,7 @@ import "react-native-reanimated";
 import "../global.css";
 import "@walletconnect/react-native-compat";
 import { WagmiProvider } from "wagmi";
-import { polygonAmoy,polygonZkEvmTestnet } from "@wagmi/core/chains";
+import { polygonAmoy, polygonZkEvmTestnet } from "@wagmi/core/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   createAppKit,
@@ -62,7 +62,7 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <Stack>
             <Stack.Screen name="index" options={{ headerShown: false }} />
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="(root)" options={{ headerShown: false }} />
             <Stack.Screen name="(auth)" options={{ headerShown: false }} />
             <Stack.Screen name="+not-found" />
           </Stack>

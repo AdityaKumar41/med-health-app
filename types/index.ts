@@ -4,6 +4,7 @@ export interface ServiceCardProps {
   description: string;
   imageUri?: string;
   customIcon?: boolean;
+  onPress?: () => void | undefined;
 }
 
 export interface BannerCardProps {

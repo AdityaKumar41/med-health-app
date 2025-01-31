@@ -5,7 +5,6 @@ import { BannerCard } from "@/components/BannerCard";
 import { ServiceCard } from "@/components/ServiceCard";
 import { NavItem } from "@/components/NavItem";
 import { StatusBar } from "expo-status-bar";
-import "../../global.css";
 import { images } from "@/constants/image";
 import { router } from "expo-router";
 
@@ -15,6 +14,7 @@ const services = [
     title: "Book an Apppointment",
     description: "Find a Doctor or specialist",
     imageUri: images.appointment,
+    onPress: () => router.push("/(root)/service"),
     
   },
   {
@@ -22,18 +22,21 @@ const services = [
     title: "Appointment with QR",
     description: "Queuing without the hustle",
     imageUri: images.book,
+    onPress: () => router.push("/(root)/appointment"),
   },
   {
     bgColor: "bg-orange-50",
     title: "Request Consultation",
     description: "Talk to specialist",
     imageUri: images.request,
+    onPress: () => router.push("/(root)/appointment"),
   },
   {
     bgColor: "bg-red-50",
     title: "Locate a Pharmacy",
     description: "Purchase Medicines",
     imageUri: images.pharmacy,
+    onPress: () => router.push("/(root)/appointment"),
   },
 ];
 

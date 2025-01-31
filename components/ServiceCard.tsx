@@ -9,10 +9,11 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
   description,
   imageUri,
   customIcon,
+  onPress,
 }) => {
   return (
     <TouchableOpacity
-      className={`flex flex-col self-stretch p-4 my-auto ${bgColor} rounded-xl w-[175px] h-fit`}  >
+      className={`flex flex-col self-stretch p-4 my-auto ${bgColor} rounded-xl w-[175px] h-fit`} onPress={onPress} >
     
       {customIcon ? (
         <View className="flex bg-red-100 rounded-lg border border-orange-200 border-solid h-[42px] min-h-[42px] w-[42px]" />
