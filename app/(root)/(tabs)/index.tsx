@@ -15,7 +15,7 @@ const services = [
     description: "Find a Doctor or specialist",
     imageUri: images.appointment,
     onPress: () => router.push("/(root)/service"),
-    
+
   },
   {
     bgColor: "bg-emerald-50",

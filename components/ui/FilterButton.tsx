@@ -1,14 +1,27 @@
 import React from 'react';
-import { View, Text } from 'react-native';
-import type { FilterButtonProps } from '@/types/type';
+import { TouchableOpacity, Text } from 'react-native';
 
-export const FilterButton: React.FC<FilterButtonProps> = ({ label }) => {
+interface FilterButtonProps {
+  label: string;
+  isActive?: boolean;
+}
+
+export const FilterButton: React.FC<FilterButtonProps> = ({ label, isActive = false }) => {
   return (
-    <View className="flex overflow-hidden gap-3 justify-center items-center px-3 py-1.5 bg-gray-50 rounded-lg border border border-solid shadow-sm">
-      <View className="self-stretch my-auto">
-        <Text>{label}</Text>
-      </View>
-      <View className="flex shrink-0 self-stretch my-auto w-5 h-5" />
-    </View>
+    <TouchableOpacity
+      className={`px-4 py-2 rounded-full border ${
+        isActive 
+          ? 'bg-[#F9F5FF] border-[#7F56D9]' 
+          : 'bg-white border-gray-200'
+      }`}
+    >
+      <Text 
+        className={`text-sm font-medium ${
+          isActive ? 'text-[#7F56D9]' : 'text-gray-700'
+        }`}
+      >
+        {label}
+      </Text>
+    </TouchableOpacity>
   );
 };

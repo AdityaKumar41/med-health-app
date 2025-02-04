@@ -44,7 +44,7 @@ const AppointmentBooking: React.FC = () => {
         </View> */}
 
         <View className="flex flex-col p-4 w-screen">
-          <View className="flex flex-col w-full tracking-wide pb-4 ">
+          <View className="flex flex-col w-full tracking-wide ">
             <View className="text-base font-bold pb-2 text-zinc-900">
               <Text className="font-JakartaBold text-xl">Medical Specialties</Text>
             </View>

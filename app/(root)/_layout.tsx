@@ -22,12 +22,6 @@ const RootLayout = () => {
           headerShown: false,
         }}
       />
-      <Stack.Screen
-        name="(root)/service"
-        options={{
-          headerShown: false,
-        }}
-      />
     </Stack>
   );
 };

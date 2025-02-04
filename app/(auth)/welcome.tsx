@@ -7,18 +7,22 @@ import { images } from "@/constants/image";
 import { useAccount } from "wagmi";
 
 const Index = () => {
+
+  const isLogged = true;
+
+
   const handleGetStarted = () => {
     router.replace("/(auth)/wallet");
   };
 
-  const {address} = useAccount()
+  const { address } = useAccount()
   console.log(address)
 
   useEffect(() => {
-    if(address){
-      router.replace("/(auth)/register");
+    if (address) {
+      router.replace("/(root)/(tabs)");
     }
-  },[])
+  }, [address])
 
   return (
     <View className="flex-col items-center h-full w-full bg-white rounded-3xl max-w-[480px]">

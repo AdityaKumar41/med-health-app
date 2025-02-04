@@ -7,6 +7,7 @@ import { router } from "expo-router";
 import { useAccount } from "wagmi";
 import { Ionicons } from '@expo/vector-icons';
 import { FormData, FormErrors, InputDetailType } from "@/types/type";
+import { fetchAPI } from "@/lib/fetch";
 
 const Register = () => {
   const { address } = useAccount();
@@ -19,11 +20,11 @@ const Register = () => {
   });
   const [errors, setErrors] = useState<FormErrors>({});
 
-  useEffect(()=>{
-    if(!address){
+  useEffect(() => {
+    if (!address) {
       router.replace("/(auth)/welcome");
     }
-  },[])
+  }, [])
 
   const InputDetails: InputDetailType[] = [
     {
@@ -58,7 +59,7 @@ const Register = () => {
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
-    
+
     // Name validation
     if (!formData.fullName.trim()) {
       newErrors.fullName = "Name is required";
@@ -105,12 +106,25 @@ const Register = () => {
 
   const handleOnRegister = async () => {
     if (!validateForm()) return;
-    
+
     setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500)); 
-      router.replace("/(tabs)");
-      console.log(formData);
+      const response = await fetchAPI("/(api)/user", {
+        method: "POST",
+        body: JSON.stringify({
+          name: formData.fullName,
+          email: formData.email,
+          age: formData.age,
+          gender: formData.gender,
+          wallet_address: address
+        })
+      })
+
+      if (response.ok) {
+        router.replace("/(root)/(tabs)");
+      } else {
+        setErrors({ submit: 'Registration failed. Please try again.' });
+      }
     } catch (error) {
       setErrors({ submit: 'Registration failed. Please try again.' });
     } finally {
@@ -154,12 +168,12 @@ const Register = () => {
         </View>
 
         <View className="p-6">
-          <Button 
-            text={loading ? "Creating Account..." : "Create Account"} 
+          <Button
+            text={loading ? "Creating Account..." : "Create Account"}
             onClick={handleOnRegister}
             disabled={loading}
           />
-          
+
         </View>
       </ScrollView>
     </SafeAreaView>
