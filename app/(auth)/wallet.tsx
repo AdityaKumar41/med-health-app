@@ -9,8 +9,9 @@ import { useAccount } from "wagmi";
 
 const Wallet = () => {
   const { open } = useAppKit();
-  const {address} = useAccount()
-  if(address){
+  const { address, chainId, status } = useAccount();
+  console.log(address, chainId, status)
+  if (address) {
     router.replace("/(auth)/register");
   }
 

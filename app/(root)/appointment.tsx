@@ -65,7 +65,7 @@ const DoctorsScreen: React.FC = () => {
           <View>
             <InputField
               placeholder="Search doctors, specialties..."
-              className="bg-gray-50 h-12"
+              className="bg-gray-50 h-14"
             />
           </View>
           <TouchableOpacity

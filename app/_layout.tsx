@@ -16,7 +16,6 @@ import {
   AppKitButton,
 } from "@reown/appkit-wagmi-react-native";
 
-// 0. Setup queryClient
 const queryClient = new QueryClient();
 
 // 1. Get projectId at https://cloud.reown.com

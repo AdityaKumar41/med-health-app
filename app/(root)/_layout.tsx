@@ -5,13 +5,15 @@ import { useAccount } from "wagmi";
 
 
 const RootLayout = () => {
-  const { isConnected, address, isReconnecting } = useAccount();
+  // const { isConnected, address, isReconnecting } = useAccount();
+  const isReconnecting = false;
+  const isConnected = true;
 
   React.useEffect(() => {
     if (isReconnecting && !isConnected) {
       router.replace("/(auth)/welcome");
     }
-  }, [isConnected, address]);
+  }, [isConnected]);
 
 
   return (

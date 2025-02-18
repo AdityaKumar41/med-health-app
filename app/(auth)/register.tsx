@@ -7,7 +7,8 @@ import { router } from "expo-router";
 import { useAccount } from "wagmi";
 import { Ionicons } from '@expo/vector-icons';
 import { FormData, FormErrors, InputDetailType } from "@/types/type";
-import { fetchAPI } from "@/lib/fetch";
+import axios from "axios";
+import { usePatient, usePatientPost } from "@/hooks/usePatient";
 
 const Register = () => {
   const { address } = useAccount();
@@ -19,6 +20,7 @@ const Register = () => {
     gender: ''
   });
   const [errors, setErrors] = useState<FormErrors>({});
+  const { mutate } = usePatientPost();
 
   useEffect(() => {
     if (!address) {
@@ -109,22 +111,22 @@ const Register = () => {
 
     setLoading(true);
     try {
-      const response = await fetchAPI("/(api)/user", {
-        method: "POST",
-        body: JSON.stringify({
-          name: formData.fullName,
-          email: formData.email,
-          age: formData.age,
-          gender: formData.gender,
-          wallet_address: address
-        })
-      })
 
-      if (response.ok) {
-        router.replace("/(root)/(tabs)");
-      } else {
-        setErrors({ submit: 'Registration failed. Please try again.' });
-      }
+      const response = mutate({
+        name: formData.fullName,
+        email: formData.email,
+        age: Number(formData.age),
+        gender: formData.gender,
+        wallet_address: address!
+      });
+      console.log("responose is ", response)
+
+      // if () {
+      //   console.log("Registration successful", response.data);
+      //   router.replace("/(root)/(tabs)");
+      // } else {
+      //   setErrors({ submit: 'Registration failed. Please try again.' });
+      // }
     } catch (error) {
       setErrors({ submit: 'Registration failed. Please try again.' });
     } finally {
