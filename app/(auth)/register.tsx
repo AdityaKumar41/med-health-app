@@ -4,14 +4,16 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import InputField from "@/components/InputField";
 import { Button } from "@/components/ui/Button";
 import { router } from "expo-router";
-import { useAccount } from "wagmi";
+import { useAccount, useWriteContract } from "wagmi";
 import { Ionicons } from '@expo/vector-icons';
 import { FormData, FormErrors, InputDetailType } from "@/types/type";
 import axios from "axios";
 import { usePatient, usePatientPost } from "@/hooks/usePatient";
+import abi from "../../contract/Contract.json"
 
 const Register = () => {
   const { address } = useAccount();
+  const { data } = usePatient(address!);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     fullName: '',
@@ -20,13 +22,14 @@ const Register = () => {
     gender: ''
   });
   const [errors, setErrors] = useState<FormErrors>({});
-  const { mutate } = usePatientPost();
+  const { mutate } = usePatientPost(address!);
 
+  // if data is present redirect to home page
   useEffect(() => {
-    if (!address) {
-      router.replace("/(auth)/welcome");
+    if (data) {
+      router.replace("/(root)/(tabs)");
     }
-  }, [])
+  }, [data]);
 
   const InputDetails: InputDetailType[] = [
     {
@@ -110,7 +113,16 @@ const Register = () => {
     if (!validateForm()) return;
 
     setLoading(true);
+
+    // writeContract({
+    //   abi,
+    //   address: process.env.EXPO_PUBLIC_CONTRACT_ADDRESS! as `0x${string}`,
+    //   functionName: "registerPatient",
+    //   args: [address, formData.fullName, formData.email, Number(formData.age)]
+    // })
+
     try {
+
 
       const response = mutate({
         name: formData.fullName,
@@ -119,6 +131,7 @@ const Register = () => {
         gender: formData.gender,
         wallet_address: address!
       });
+
       console.log("responose is ", response)
 
       // if () {

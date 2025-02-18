@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 
 interface PatientData {
@@ -9,7 +9,8 @@ interface PatientData {
     wallet_address: string;
 }
 
-export const usePatientPost = () => {
+export const usePatientPost = (wallet_address: string) => {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (patient: PatientData) => {
             const apiUrl = `${process.env.EXPO_PUBLIC_BASE_URL}/v1/patient`;
@@ -21,6 +22,7 @@ export const usePatientPost = () => {
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
+                        Authorization: `Bearer ${wallet_address}`,
                     },
                 });
 
@@ -41,17 +43,23 @@ export const usePatientPost = () => {
                 throw error;
             }
         },
-        onSuccess: (data) => {
-            return data;
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['patientquery'] });
         }
     });
 }
 
-export const usePatient = () => {
+export const usePatient = (address: string) => {
     return useQuery({
-        queryKey: ['patient'],
+        queryKey: ['patientquery'],
         queryFn: async () => {
-            const responose = await axios.get(`${process.env.EXPO_PUBLIC_BASE_URL}/v1/patient`);
+            const responose = await axios.get(`${process.env.EXPO_PUBLIC_BASE_URL}/v1/patient`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    Authorization: `Bearer ${address}`,
+                },
+            });
             return responose.data;
         }
     })

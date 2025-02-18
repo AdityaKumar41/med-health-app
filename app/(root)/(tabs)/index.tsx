@@ -7,6 +7,8 @@ import { NavItem } from "@/components/NavItem";
 import { StatusBar } from "expo-status-bar";
 import { images } from "@/constants/image";
 import { router } from "expo-router";
+import { usePatient } from "@/hooks/usePatient";
+import { useAccount } from "wagmi";
 
 const services = [
   {
@@ -64,6 +66,9 @@ const banners = [
 ];
 
 const Home = () => {
+  const { address } = useAccount()
+  const { data } = usePatient(address!);
+  console.log("data from home", data)
   return (
     <SafeAreaView>
       <ScrollView>

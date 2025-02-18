@@ -7,11 +7,13 @@ import { Button } from "@/components/ui/Button";
 import { router } from "expo-router";
 import { MenuSectionProps } from "@/types/type";
 import { StatusBar } from "expo-status-bar";
+import { usePatient } from "@/hooks/usePatient";
 
 const Account = () => {
   const { address, isConnected } = useAccount();
-  const {open} = useAppKit()
-  if(!address){
+  // const {data} = usePatient(address!);
+  const { open } = useAppKit()
+  if (!address) {
     router.replace("/(auth)/welcome");
   }
 
@@ -92,7 +94,7 @@ const Account = () => {
 
         {/* Wallet Connection */}
         <View className="pb-6">
-          <Button text="Wallet Info !" onClick={open}/>
+          <Button text="Wallet Info !" onClick={open} />
         </View>
       </View>
       <StatusBar style="light" />
@@ -100,7 +102,7 @@ const Account = () => {
   );
 };
 
-const StatCard = ({ title, value }: {title: String, value: number | string}) => (
+const StatCard = ({ title, value }: { title: String, value: number | string }) => (
   <View className="bg-gray-50 p-4 rounded-xl w-[48%]">
     <Text className="text-gray-500 text-sm font-JakartaMedium ">{title}</Text>
     <Text className="text-xl font-JakartaBold text-gray-800 ">{value}</Text>
@@ -114,9 +116,8 @@ const MenuSection = ({ title, items }: MenuSectionProps) => (
       {items.map((item, index) => (
         <TouchableOpacity
           key={index}
-          className={`flex-row items-center p-4 ${
-            index < items.length - 1 ? "border-b border-gray-100" : ""
-          }`}
+          className={`flex-row items-center p-4 ${index < items.length - 1 ? "border-b border-gray-100" : ""
+            }`}
         >
           <Ionicons name={item.icon} size={22} color="#4B5563" />
           <View className="flex-1 ml-3">
