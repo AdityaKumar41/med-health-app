@@ -70,10 +70,6 @@ export interface MenuItem {
   value?: string;
 }
 
-export interface MenuSectionProps {
-  title: string;
-  items: MenuItem[];
-}
 
 export interface MenuSectionProps {
   title: string;
@@ -91,4 +87,21 @@ export interface AppointmentProps {
   specialty: string;
   date: string;
   image?: string;
+}
+
+export interface AppointmentSchema {
+  patient_id: string;
+  doctor_id: string;
+  date: string;
+  appointment_fee: string;
+  amount_paid: string;
+  ticket_notes: string;
+}
+
+export interface SpecialityProps {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  icon?: string;
 }

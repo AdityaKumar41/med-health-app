@@ -5,6 +5,8 @@ import { View, Text, TouchableOpacity, ScrollView, TextInput } from "react-nativ
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "react-native";
 import { useNavigation, useRouter } from "expo-router";
+import { useSpecialization } from "@/hooks/useSpecialization";
+import { SpecialityProps } from "@/types/type";
 
 const specialties = [
   {
@@ -32,6 +34,8 @@ const specialties = [
 const AppointmentBooking: React.FC = () => {
   const navigation = useNavigation();
   const router = useRouter();
+
+  const { data, error } = useSpecialization()
 
   React.useEffect(() => {
     navigation.setOptions({ headerShown: false });
@@ -81,12 +85,13 @@ const AppointmentBooking: React.FC = () => {
 
             {/* Specialties List */}
             <View className="py-3">
-              {specialties.map((specialty, index) => (
+              {data.map((specialty: SpecialityProps, index: number) => (
                 <SpecialtyCard
                   key={index}
-                  emoji={specialty.emoji}
-                  title={specialty.title}
+                  emoji={specialty.icon}
+                  title={specialty.name}
                   description={specialty.description}
+                  onPress={() => router.push({ pathname: "/(root)/appointment", params: { id: specialty.id } })}
                 />
               ))}
 

@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { useSpecialization } from '@/hooks/useSpecialization';
+import { SpecialityProps } from '@/types/type';
 
 export const specialties = [
   {
@@ -97,7 +98,7 @@ const AppointmentBooking: React.FC = () => {
             Popular Categories
           </Text>
           <View className="flex-row flex-wrap justify-between">
-            {specialties.slice(0, 4).map((specialty, index) => (
+            {data.slice(0, 4).map((specialty: SpecialityProps, index: number) => (
               <Animated.View
                 key={index}
                 entering={FadeInUp.delay(index * 100)}
@@ -107,12 +108,12 @@ const AppointmentBooking: React.FC = () => {
                   className="bg-gray-50 p-4 rounded-2xl"
                   onPress={() => {/* Handle specialty selection */ }}
                 >
-                  <Text className="text-3xl mb-2">{specialty.emoji}</Text>
+                  <Text className="text-3xl mb-2">{specialty.icon}</Text>
                   <Text className="font-JakartaBold text-gray-900">
-                    {specialty.title}
+                    {specialty.name}
                   </Text>
                   <Text className="font-Jakarta text-xs text-gray-500 mt-1">
-                    {specialty.count} doctors
+                    {specialty.name} doctors
                   </Text>
                 </TouchableOpacity>
               </Animated.View>
@@ -125,7 +126,7 @@ const AppointmentBooking: React.FC = () => {
           <Text className="font-JakartaBold text-lg text-gray-800 mb-3">
             All Specialties
           </Text>
-          {specialties.map((specialty, index) => (
+          {data.map((specialty: SpecialityProps, index: number) => (
             <Animated.View
               key={index}
               entering={FadeInUp.delay(index * 50)}
@@ -134,14 +135,14 @@ const AppointmentBooking: React.FC = () => {
                 className="flex-row items-center bg-white border border-gray-100 rounded-xl p-4 mb-3"
                 onPress={() => {/* Handle specialty selection */ }}
               >
-                <Text className="text-3xl mr-4">{specialty.emoji}</Text>
+                <Text className="text-3xl mr-4">{specialty.icon}</Text>
                 <View className="flex-1">
-                  <Text className="font-JakartaBold text-gray-900">{specialty.title}</Text>
+                  <Text className="font-JakartaBold text-gray-900">{specialty.name}</Text>
                   <Text className="font-Jakarta text-sm text-gray-500">{specialty.description}</Text>
                 </View>
                 <View className="bg-blue-50 px-2 py-1 rounded-full">
                   <Text className="font-JakartaMedium text-xs text-blue-600">
-                    {specialty.count} doctors
+                    {specialty.id} doctors
                   </Text>
                 </View>
               </TouchableOpacity>

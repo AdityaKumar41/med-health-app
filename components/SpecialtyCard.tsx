@@ -8,9 +8,10 @@ export const SpecialtyCard: React.FC<SpecialtyCardProps> = ({
   emoji,
   title,
   description,
+  onPress,
 }) => {
   return (
-    <TouchableOpacity className="flex flex-row gap-3 items-center p-4 mt-1 w-full">
+    <TouchableOpacity className="flex flex-row gap-3 items-center p-4 mt-1 w-full" onPress={onPress}>
       <View className="flex items-center justify-center overflow-hidden self-stretch px-3 text-3xl font-bold leading-none text-black bg-purple-50 border border-indigo-200 border-solid h-[52px] rounded-[99px] w-[52px]">
         <Text className="text-3xl">{emoji}</Text>
       </View>

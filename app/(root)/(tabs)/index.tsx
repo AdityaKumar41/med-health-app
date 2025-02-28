@@ -1,5 +1,5 @@
-import { View, Text, TextInput, ScrollView, Image } from "react-native";
-import React from "react";
+import { View, Text, TextInput, ScrollView, Image, TouchableOpacity } from "react-native";
+import React, { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BannerCard } from "@/components/BannerCard";
 import { ServiceCard } from "@/components/ServiceCard";
@@ -12,6 +12,8 @@ import { useAccount } from "wagmi";
 import { Ionicons } from "@expo/vector-icons";
 import AppointmentCard from "@/components/Appointment";
 import { useSpecialization } from "@/hooks/useSpecialization";
+import { useDoctorbyId, useSearchDoctor } from "@/hooks/useDoctor";
+import debounce from "lodash.debounce";
 
 const services = [
   {
@@ -71,9 +73,28 @@ const banners = [
 const Home = () => {
   const { address } = useAccount()
   const { data, refetch } = usePatient(address!);
+  const { data: doctorData } = useDoctorbyId(data?.appointments[0]?.doctor_id)
   const { data: specializationData } = useSpecialization()
-  console.log("data", specializationData)
   const firstTimeRef = React.useRef(true)
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const { data: searchResults } = useSearchDoctor(debouncedQuery);
+
+  console.log("patient", data)
+
+
+
+  useEffect(() => {
+    const handler = debounce(() => {
+      setDebouncedQuery(searchQuery);
+    }, 500);
+
+    handler();
+
+    return () => {
+      handler.cancel();
+    };
+  }, [searchQuery]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -86,7 +107,13 @@ const Home = () => {
     }, [refetch])
   );
 
-  const isAppointment = false;
+  const pendingOrActiveAppointment = data?.appointments?.find(
+    (appointment: { status: string; }) => appointment.status === "pending" || appointment.status === "active"
+  );
+
+
+
+  const isAppointment = !!pendingOrActiveAppointment;
 
   return (
     <SafeAreaView>
@@ -112,11 +139,12 @@ const Home = () => {
             <View className="flex gap-2 mt-4 w-full">
               <View className="flex flex-row gap-2 h-16 text-sm font-medium items-center min-w-[240px] w-full text-zinc-500">
                 <View className="flex-1 h-full p-2 bg-white rounded-xl border border-gray-300 border-solid">
-                  {/* <View className="flex shrink-0 w-6 h-6" /> */}
                   <TextInput
                     className="h-full w-full"
                     placeholder="Search Doctor !"
                     aria-label="Search symptoms or diseases"
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
                   />
                 </View>
                 <View className="flex gap-3 justify-center items-center p-2 w-16 h-16 border-gray-300 bg-[#F9F5FF] rounded-xl">
@@ -125,8 +153,30 @@ const Home = () => {
               </View>
             </View>
           </View>
-          {isAppointment && (
-            <AppointmentCard name="Dr. Stone Gaze" specialty="Ear, Nose & Throat specialist" date="12th Dec 2023, 10.00 PM" image="https://api.dicebear.com/9.x/dylan/jpeg?seed=Alexander" />
+
+          {debouncedQuery && searchResults?.data && (
+            <View className="p-4">
+              {searchResults.data.map((doctor: any) => (
+                <TouchableOpacity key={doctor.id} onPress={() => router.push(`/doctor-profile?id=${doctor.id}`)}>
+                  <View className="flex-row items-center mb-4">
+                    <Image source={{ uri: doctor.profile_picture }} className="w-12 h-12 rounded-full mr-4" />
+                    <View>
+                      <Text className="text-lg font-JakartaBold">{doctor.name}</Text>
+                      <Text className="text-gray-600">{doctor.specialties.map((specialty: any) => specialty.name).join(", ")}</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          {isAppointment && pendingOrActiveAppointment && (
+            <AppointmentCard
+              name={doctorData?.data?.name}
+              specialty={doctorData?.data?.specialist?.map((specialist: any) => specializationData?.data.find((data: any) => data.id === specialist).name).join(", ")}
+              date={new Date(pendingOrActiveAppointment.date).toLocaleString()}
+              image={doctorData?.data?.profile_picture}
+            />
           )}
           <View>
             <View className="flex items-center justify-center flex-wrap flex-row gap-4  py-4">

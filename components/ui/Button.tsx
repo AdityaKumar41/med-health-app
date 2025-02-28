@@ -5,16 +5,16 @@ import { AppointmentButtonProps } from "@/types";
 export const Button: React.FC<AppointmentButtonProps> = ({
   text,
   onClick,
+  className = "", // Add className prop with default empty string
   ...props
 }) => {
   return (
     <TouchableOpacity
       onPress={onClick}
-      className="px-6 py-4 w-full bg-blue-700 rounded-lg shadow-sm min-w-[240px] items-center"
+      className={`px-6 py-4 w-full bg-blue-700 rounded-lg shadow-sm min-w-[240px] items-center ${className}`}
       accessibilityRole="button"
       accessibilityLabel={text}
       {...props}
-
     >
       <Text className="font-JakartaBold text-xl text-white w-full text-center items-center">{text}</Text>
     </TouchableOpacity>

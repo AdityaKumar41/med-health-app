@@ -1,65 +1,51 @@
-import React, { useEffect } from 'react';
-import { View, Text, ScrollView, Image, TouchableOpacity } from 'react-native';
-import { SearchBar } from '@/components/SearchBar';
+import React, { useEffect, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { FilterButton } from '@/components/ui/FilterButton';
 import { DoctorCard } from '@/components/DoctorCard';
 import InputField from '@/components/InputField';
-import { useNavigation, useRouter } from 'expo-router';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from "@expo/vector-icons";
+import { useDoctorBySpecialization } from '@/hooks/useSpecialization';
 
-export const doctorsData = [
-  {
-    name: "Dr. Patricia Ahoy",
-    specialty: "Ear, Nose & Throat specialist",
-    price: "IDR. 120.000",
-    rating: "4.5",
-    imageUrl: "https://cdn.builder.io/api/v1/image/assets/TEMP/e37229356691a4f10f5ae1f014d211357e18d13fe8f2a634748704b4c4201882?placeholderIfAbsent=true&apiKey=2e39da48f85848aca22cf1d6f6e5c588"
-  },
-  {
-    name: "Dr. Stone Gaze",
-    specialty: "Ear, Nose & Throat specialist",
-    price: "IDR. 120.000",
-    rating: "4.5",
-    imageUrl: "https://cdn.builder.io/api/v1/image/assets/TEMP/8a1bc6d5bcab373f96b2e2a31bf5c6af9dcc16b86fa4ccf8c21bf620cfb04683?placeholderIfAbsent=true&apiKey=2e39da48f85848aca22cf1d6f6e5c588"
-  },
-  {
-    name: "Dr. Wahyu",
-    specialty: "Ear, Nose & Throat specialist",
-    price: "IDR. 120.000",
-    rating: "4.5",
-    imageUrl: "https://cdn.builder.io/api/v1/image/assets/TEMP/cd07fb7d99dd447d0971664e9e6dd11da987a433d861fce607270ebf331bfc86?placeholderIfAbsent=true&apiKey=2e39da48f85848aca22cf1d6f6e5c588"
-  },
-  {
-    name: "Dr. Reza Razor",
-    specialty: "Ear, Nose & Throat specialist",
-    price: "IDR. 120.000",
-    rating: "4.5",
-    imageUrl: "https://cdn.builder.io/api/v1/image/assets/TEMP/4d3cf00892e307ffa0eee3ce7be3e7d9bc32ee6e41f3d1d28e2ea470dfae0b72?placeholderIfAbsent=true&apiKey=2e39da48f85848aca22cf1d6f6e5c588"
-  },
-  {
-    name: "Dr. Jacky Cun",
-    specialty: "Ear, Nose & Throat specialist",
-    price: "IDR. 120.000",
-    rating: "4.5",
-    imageUrl: "https://cdn.builder.io/api/v1/image/assets/TEMP/425d2afb4b4560e70d53b74fb95b1e1193741f155415fb38651bd0d1c70a5c1d?placeholderIfAbsent=true&apiKey=2e39da48f85848aca22cf1d6f6e5c588"
-  },
-  {
-    name: "Dr. Jacky Cun",
-    specialty: "Ear, Nose & Throat specialist",
-    price: "IDR. 120.000",
-    rating: "4.5",
-    imageUrl: "https://cdn.builder.io/api/v1/image/assets/TEMP/425d2afb4b4560e70d53b74fb95b1e1193741f155415fb38651bd0d1c70a5c1d?placeholderIfAbsent=true&apiKey=2e39da48f85848aca22cf1d6f6e5c588"
-  }
-];
+// Define type for doctor object from API response
+interface Doctor {
+  doctor_id: string;
+  name: string;
+  specialties: string[];
+  qualification: string;
+  experience: number;
+  profile_picture: string;
+  average_rating: number | null;
+  hospital: string;
+}
 
 const DoctorsScreen: React.FC = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+  // get details from params
+  const { id } = useLocalSearchParams()
+  const { data, isLoading } = useDoctorBySpecialization(Array.isArray(id) ? id[0] : id);
   const navigation = useNavigation();
   const router = useRouter();
 
   useEffect(() => {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
+
+  // Format price based on doctor experience
+  const formatPrice = (experience: number) => {
+    const basePrice = 100000 + (experience * 5000);
+    return `INR. ${basePrice.toLocaleString()}`;
+  };
+
+  // Get doctors from API response
+  const apiDoctors = data?.data || [];
+
+  // Filter doctors based on search query
+  const filteredDoctors = searchQuery
+    ? apiDoctors.filter((doctor: { name: string; }) =>
+      doctor.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    : apiDoctors;
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -88,7 +74,8 @@ const DoctorsScreen: React.FC = () => {
                   placeholder="Search doctors, specialties..."
                   className="h-12 px-4 bg-white rounded-xl border border-gray-300"
                   label={''}
-                  value={''}
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
                 />
               </View>
             </View>
@@ -111,20 +98,36 @@ const DoctorsScreen: React.FC = () => {
             className="flex-1 px-4 pt-2"
             showsVerticalScrollIndicator={false}
           >
-            {doctorsData.map((doctor, index) => (
-              <TouchableOpacity
-                key={index}
-              // onPress={() => router.push('/doctor-detail')}
-              >
-                <DoctorCard
-                  name={doctor.name}
-                  specialty={doctor.specialty}
-                  price={doctor.price}
-                  rating={doctor.rating}
-                  imageUrl={doctor.imageUrl}
-                />
-              </TouchableOpacity>
-            ))}
+            {isLoading ? (
+              <View className="flex-1 justify-center items-center py-10">
+                <ActivityIndicator size="large" color="#0000ff" />
+                <Text className="mt-2">Loading doctors...</Text>
+              </View>
+            ) : filteredDoctors.length > 0 ? (
+              filteredDoctors.map((doctor: Doctor) => (
+                <TouchableOpacity
+                  key={doctor.doctor_id}
+                  onPress={() => router.push({
+                    pathname: '/(root)/doctor-profile',
+                    params: { id: doctor.doctor_id }
+                  })}
+                  activeOpacity={0.7}
+                  style={{ width: '100%' }}
+                >
+                  <DoctorCard
+                    name={doctor.name}
+                    specialty={doctor.qualification || 'Specialist'}
+                    price={formatPrice(doctor.experience)}
+                    rating={doctor.average_rating?.toString() || 'N/A'}
+                    imageUrl={doctor.profile_picture || 'https://cdn.builder.io/api/v1/image/assets/TEMP/e37229356691a4f10f5ae1f014d211357e18d13fe8f2a634748704b4c4201882'}
+                  />
+                </TouchableOpacity>
+              ))
+            ) : (
+              <View className="flex-1 justify-center items-center py-10">
+                <Text>No doctors found</Text>
+              </View>
+            )}
           </ScrollView>
         </View>
       </View>

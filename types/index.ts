@@ -20,6 +20,7 @@ export interface NavItemProps {
 export interface AppointmentButtonProps {
   text: string;
   disabled?: boolean;
+  className?: string;
   onClick?: () => void;
 }
 
@@ -29,9 +30,10 @@ export interface AppointmentHeaderProps {
 }
 
 export interface SpecialtyCardProps {
-  emoji: string;
+  emoji?: string;
   title: string;
   description: string;
+  onPress?: () => void;
 }
 
 export interface SearchBarProps {

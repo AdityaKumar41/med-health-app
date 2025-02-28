@@ -11,11 +11,11 @@ const IndexPage = () => {
   const { address } = useAccount();
   const { data } = usePatient(address!);
 
-  if (data) {
-    return <Redirect href={"/(root)/(tabs)"} />;
+  if (!data) {
+    return <Redirect href={"/(auth)/welcome"} />;
   }
+  return <Redirect href={"/(root)/(tabs)"} />;
 
-  return <Redirect href={"/(auth)/welcome"} />;
 };
 
 export default IndexPage;
