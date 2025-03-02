@@ -87,6 +87,7 @@ export interface AppointmentProps {
   specialty: string;
   date: string;
   image?: string;
+  onPress: () => void;
 }
 
 export interface AppointmentSchema {

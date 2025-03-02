@@ -1,17 +1,16 @@
-import { AppointmentSchema } from "@/types/type";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 
-export const usePatientPost = (wallet_address: string) => {
+export const useDocumentPost = (wallet_address: string) => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async (appointment: AppointmentSchema) => {
-            const apiUrl = `${process.env.EXPO_PUBLIC_BASE_URL}/v1/book`;
+        mutationFn: async (document) => {
+            const apiUrl = `${process.env.EXPO_PUBLIC_BASE_URL}/v1/document`;
             try {
                 const response = await axios({
                     method: 'post',
                     url: apiUrl,
-                    data: appointment,
+                    data: document,
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
@@ -19,18 +18,17 @@ export const usePatientPost = (wallet_address: string) => {
                     },
                 });
 
-                console.log('API Response:', response);
                 return response.data;
             } catch (error: any) {
                 if (error.code === 'ECONNABORTED') {
                     throw new Error('Request timed out. Please check your internet connection.');
                 }
                 if (error.response) {
-                    console.error('Server responded with:', error.response.status, error.response.data);
+
                     throw new Error(`Server error: ${error.response.status}`);
                 }
                 if (error.request) {
-                    console.error('No response received:', error.request);
+
                     throw new Error('No response from server. Please check your internet connection.');
                 }
                 throw error;
@@ -42,11 +40,12 @@ export const usePatientPost = (wallet_address: string) => {
     });
 };
 
-export const useAppointment = (wallet_address: string) => {
+
+export const useDocument = (wallet_address: string) => {
     return useQuery({
-        queryKey: ['appointmentquery'],
+        queryKey: ['document'],
         queryFn: async () => {
-            const apiUrl = `${process.env.EXPO_PUBLIC_BASE_URL}/v1/appointments`;
+            const apiUrl = `${process.env.EXPO_PUBLIC_BASE_URL}/v1/document`;
             try {
                 const response = await axios({
                     method: 'get',
@@ -57,23 +56,19 @@ export const useAppointment = (wallet_address: string) => {
                         Authorization: `Bearer ${wallet_address}`,
                     },
                 });
-
-                console.log('API Response:', response);
                 return response.data;
             } catch (error: any) {
                 if (error.code === 'ECONNABORTED') {
                     throw new Error('Request timed out. Please check your internet connection.');
                 }
                 if (error.response) {
-                    console.error('Server responded with:', error.response.status, error.response.data);
                     throw new Error(`Server error: ${error.response.status}`);
                 }
                 if (error.request) {
-                    console.error('No response received:', error.request);
                     throw new Error('No response from server. Please check your internet connection.');
                 }
                 throw error;
             }
         }
-    })
-}
+    });
+};

@@ -1,4 +1,6 @@
 import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import { useNetInfo } from "@react-native-community/netinfo";
+import { OfflinePage } from "@/components/OfflinePage";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 // import * as SplashScreen from "expo-splash-screen";
@@ -15,6 +17,8 @@ import {
   AppKit,
   AppKitButton,
 } from "@reown/appkit-wagmi-react-native";
+import { ChatProvider } from "@/context/useChatProvider";
+import { NetworkProvider } from '@/context/NetworkContext';
 
 const queryClient = new QueryClient();
 
@@ -46,6 +50,7 @@ createAppKit({
 });
 
 export default function RootLayout() {
+  const { isConnected } = useNetInfo();
   const [loaded] = useFonts({
     "Jakarta-Bold": require("../assets/fonts/PlusJakartaSans-Bold.ttf"),
     "Jakarta-ExtraBold": require("../assets/fonts/PlusJakartaSans-ExtraBold.ttf"),
@@ -55,20 +60,29 @@ export default function RootLayout() {
     "Jakarta-Regular": require("../assets/fonts/PlusJakartaSans-Regular.ttf"),
     "Jakarta-SemiBold": require("../assets/fonts/PlusJakartaSans-SemiBold.ttf"),
   });
+
+  if (!isConnected) {
+    return <OfflinePage onRetry={() => null} />;
+  }
+
   return (
-    <ThemeProvider value={DefaultTheme}>
-      <WagmiProvider config={wagmiConfig}>
-        <QueryClientProvider client={queryClient}>
-          <Stack>
-            <Stack.Screen name="index" options={{ headerShown: false }} />
-            <Stack.Screen name="(root)" options={{ headerShown: false }} />
-            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-            <Stack.Screen name="+not-found" />
-          </Stack>
-          <AppKit />
-          <StatusBar style="dark" />
-        </QueryClientProvider>
-      </WagmiProvider>
-    </ThemeProvider>
+    <NetworkProvider>
+      <ThemeProvider value={DefaultTheme}>
+        <WagmiProvider config={wagmiConfig}>
+          <QueryClientProvider client={queryClient}>
+            <ChatProvider >
+              <Stack>
+                <Stack.Screen name="index" options={{ headerShown: false }} />
+                <Stack.Screen name="(root)" options={{ headerShown: false }} />
+                <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                <Stack.Screen name="+not-found" />
+              </Stack>
+              <AppKit />
+              <StatusBar style="dark" />
+            </ChatProvider>
+          </QueryClientProvider>
+        </WagmiProvider>
+      </ThemeProvider>
+    </NetworkProvider>
   );
 }

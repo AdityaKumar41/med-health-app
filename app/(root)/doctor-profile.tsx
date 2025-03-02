@@ -61,11 +61,15 @@ const DoctorProfileScreen: React.FC = () => {
     const router = useRouter();
 
 
-    // Format consultation fee based on experience
-    const calculateConsultationFee = (experience: number) => {
-        const basePrice = 800 + (experience * 100);
-        return `₹${basePrice}`;
-    };
+    // Format consultation fee based on experience or provided consultancy_fees
+    // const calculateConsultationFee = (experience: number, consultancyFees: string) => {
+    //     if (consultancyFees) {
+    //         const isPOL = consultancyFees.includes('POL');
+    //         return isPOL ? consultancyFees : `₹${consultancyFees}`;
+    //     }
+    //     const basePrice = 800 + (experience * 100);
+    //     return `₹${basePrice}`;
+    // };
 
     // Get doctor's specialties as readable string
     const getSpecialties = () => {
@@ -126,8 +130,8 @@ const DoctorProfileScreen: React.FC = () => {
         router.push({
             pathname: '/(root)/booking',
             params: {
-                doctorId: doctor?.doctor_id,
-                doctorName: doctor?.name,
+                doctorId: doctor.doctor_id,
+                doctorName: doctor.name,
             }
         });
     };
@@ -374,14 +378,14 @@ const DoctorProfileScreen: React.FC = () => {
                                     Consultation Fee
                                 </Text>
                                 <Text className="text-xl font-JakartaBold text-gray-800">
-                                    {calculateConsultationFee(doctor.experience)}
+                                    POL {doctor.consultancy_fees}
                                 </Text>
                             </View>
 
                             <Button
                                 onClick={handleBookAppointment}
                                 text="Book Appointment"
-                                className='w-[200px]'
+                                className='w-[100px]'
                             />
                         </View>
                     </ScrollView>

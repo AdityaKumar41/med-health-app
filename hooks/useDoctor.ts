@@ -38,3 +38,19 @@ export const useSearchDoctor = (query: string) => {
         enabled: !!debouncedQuery, // Ensure the query is only run when there is a search query
     });
 }
+
+
+// get all doctors by id
+export const useDoctorsByIds = (doctorIds: string[]) => {
+    return useQuery({
+        queryKey: ["doctorsId", doctorIds],
+        queryFn: async () => {
+            const responose = await axios({
+                method: 'POST',
+                data: { doctorIds },
+                url: `${process.env.EXPO_PUBLIC_BASE_URL}/v1/doctors/bulk`
+            });
+            return responose.data;
+        }
+    });
+}

@@ -8,29 +8,6 @@ import { useNavigation, useRouter } from "expo-router";
 import { useSpecialization } from "@/hooks/useSpecialization";
 import { SpecialityProps } from "@/types/type";
 
-const specialties = [
-  {
-    emoji: "👂🏻",
-    title: "Ear, Nose & Throat",
-    description: "Wide selection of doctor's specialties",
-  },
-  {
-    emoji: "🧠",
-    title: "Psychiatrist",
-    description: "Wide selection of doctor's specialties",
-  },
-  {
-    emoji: "🦷",
-    title: "Dentist",
-    description: "Wide selection of doctor's specialties",
-  },
-  {
-    emoji: "🤌",
-    title: "Dermato-veneorologis",
-    description: "Wide selection of doctor's specialties",
-  },
-];
-
 const AppointmentBooking: React.FC = () => {
   const navigation = useNavigation();
   const router = useRouter();

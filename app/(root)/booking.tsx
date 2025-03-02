@@ -8,6 +8,7 @@ import {
     Modal,
     StyleSheet,
     Alert,
+    Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
@@ -17,6 +18,7 @@ import { Button } from '@/components/ui/Button';
 import { useDoctorbyId } from '@/hooks/useDoctor';
 import { usePatientPost } from '@/hooks/useAppointment';
 import { useAccount } from 'wagmi';
+import { usePatient } from '@/hooks/usePatient';
 
 // Define types
 interface TimeSlot {
@@ -34,6 +36,8 @@ interface Receipt {
     appointmentTime: string;
     appointmentFee: number; // Changed to number
     bookingId: string;
+    ticketNumber?: string;
+    qrCode?: string;
     // Add any additional fields from the API response
 }
 
@@ -42,6 +46,7 @@ const BookingScreen = () => {
     const router = useRouter();
     const navigation = useNavigation();
     const { doctorId, doctorName, day } = useLocalSearchParams();
+    const { data: patient } = usePatient(walletAddress!)
 
     // States
     const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -227,17 +232,21 @@ const BookingScreen = () => {
 
     // Calculate consultation fee
     const calculateConsultationFee = () => {
-        if (doctor && doctor.experience) {
-            const basePrice = 800 + (doctor.experience * 100);
-            return `₹${basePrice}`;
+        if (doctor && doctor.consultancy_fees) {
+            return `POL ${doctor.consultancy_fees}`;
         }
-        return '₹800';
+        return 'FREE';
     };
 
     // Handle booking confirmation
     const handleConfirmBooking = () => {
         if (!selectedDate || !selectedTimeSlot || !doctor) {
             Alert.alert('Booking Error', 'Please select both date and time for your appointment');
+            return;
+        }
+
+        if (!patient || !patient.id) {
+            Alert.alert('Booking Error', 'Patient information is missing. Please try again.');
             return;
         }
 
@@ -248,12 +257,12 @@ const BookingScreen = () => {
             const appointmentDateTime = combineDateTime(selectedDate, selectedTimeSlot);
 
             // Calculate fees from doctor's experience - now as numbers
-            const fee = doctor.experience ? 800 + (doctor.experience * 100) : 800;
+            const fee = doctor.consultancy_fees || 800;
 
             // Prepare the booking data according to the Zod schema
             const bookingData = {
-                patient_id: walletAddress || 'demo-patient',
-                doctor_id: doctor.doctor_id,
+                patient_id: patient.id, // Ensure patient.id is available
+                doctor_id: doctor.id,
                 date: appointmentDateTime,
                 appointment_fee: fee, // Send as number
                 amount_paid: fee, // Send as number
@@ -262,13 +271,13 @@ const BookingScreen = () => {
 
             // Call the mutation function to make the API request
             bookAppointment(bookingData, {
-                onSuccess: (response: { id: any; }) => {
+                onSuccess: (response: any) => {
                     setIsBookingLoading(false);
 
                     // Create receipt data
                     setReceipt({
-                        doctorName: Array.isArray(doctorName) ? doctorName[0] : doctorName || 'Doctor',
-                        doctorSpecialty: doctor?.specialties ? 'Specialist' : 'General Physician',
+                        doctorName: doctor.name,
+                        doctorSpecialty: doctor.specialties ? doctor.specialties.map((specialty: any) => specialty.name).join(', ') : 'General Physician',
                         appointmentDate: new Date(selectedDate).toLocaleDateString('en-US', {
                             weekday: 'long',
                             month: 'long',
@@ -277,7 +286,9 @@ const BookingScreen = () => {
                         }),
                         appointmentTime: selectedTimeSlot,
                         appointmentFee: fee, // Store as number
-                        bookingId: response.id || `BK${Math.floor(Math.random() * 1000000)}`
+                        bookingId: response.appointment.id,
+                        ticketNumber: response.ticket.ticket_number,
+                        qrCode: response.ticket.qr_code
                     });
 
                     setShowReceipt(true);
@@ -593,22 +604,39 @@ const BookingScreen = () => {
             </View>
 
             <ScrollView className="flex-1 p-4">
-                {/* Doctor Info Summary */}
+                {/* Patient Info */}
                 <View className="bg-white rounded-xl p-4 mb-4 shadow-sm">
                     <Text className="text-lg font-JakartaSemiBold mb-2">
-                        {Array.isArray(doctorName) ? doctorName[0] : doctorName}
+                        Patient: {patient?.name || 'Loading...'}
                     </Text>
-                    <View className="flex-row items-center">
-                        <MaterialIcons name="medical-services" size={16} color="#0066CC" />
-                        <Text className="ml-2 text-gray-700">
-                            {doctor?.specialties ? 'Specialist' : 'General Physician'}
+                </View>
+
+                {/* Doctor Info Summary */}
+                <View className="bg-white flex-row justify-between items-center rounded-xl p-4 mb-4 shadow-sm">
+                    <View>
+                        <Text className="text-lg font-JakartaSemiBold mb-2">
+                            {Array.isArray(doctorName) ? doctorName[0] : doctorName}
                         </Text>
+                        <View className="flex-row items-center">
+                            <MaterialIcons name="medical-services" size={16} color="#0066CC" />
+                            <Text className="ml-2 text-gray-700">
+                                {doctor?.specialties ? doctor.specialties.map((specialty: any) => specialty.name || 'Specialist').join(', ') : 'General Physician'}
+                            </Text>
+                        </View>
+                        <View className="flex-row items-center mt-1">
+                            <Ionicons name="cash-outline" size={16} color="#0066CC" />
+                            <Text className="ml-2 text-gray-700">
+                                Consultation Fee: {calculateConsultationFee()}
+                            </Text>
+                        </View>
                     </View>
-                    <View className="flex-row items-center mt-1">
-                        <Ionicons name="cash-outline" size={16} color="#0066CC" />
-                        <Text className="ml-2 text-gray-700">
-                            Consultation Fee: {calculateConsultationFee()}
-                        </Text>
+                    <View>
+                        {doctor?.profile_picture && (
+                            <Image
+                                source={{ uri: doctor.profile_picture }}
+                                className="w-16 h-16 rounded-md mb-2"
+                            />
+                        )}
                     </View>
                 </View>
 
@@ -818,7 +846,7 @@ const BookingScreen = () => {
                 </View>
             </Modal>
 
-            {/* FIXED Booking Receipt Modal */}
+            {/* Booking Receipt Modal */}
             <Modal
                 visible={showReceipt}
                 transparent={true}
@@ -893,6 +921,23 @@ const BookingScreen = () => {
                                 <Text className="text-2xl font-JakartaBold text-blue-600">
                                     {receipt?.bookingId}
                                 </Text>
+                            </View>
+
+                            <View className="bg-blue-600/10 p-5 rounded-xl items-center mb-6">
+                                <Text className="text-sm text-blue-600 mb-1">Ticket Number</Text>
+                                <Text className="text-2xl font-JakartaBold text-blue-600">
+                                    {receipt?.ticketNumber}
+                                </Text>
+                            </View>
+
+                            <View className="bg-blue-600/10 p-5 rounded-xl items-center mb-6">
+                                <Text className="text-sm text-blue-600 mb-1">QR Code</Text>
+                                {receipt?.qrCode && (
+                                    <Image
+                                        source={{ uri: receipt.qrCode }}
+                                        className="w-32 h-32"
+                                    />
+                                )}
                             </View>
 
                             <TouchableOpacity

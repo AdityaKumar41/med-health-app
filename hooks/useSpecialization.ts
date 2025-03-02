@@ -24,3 +24,15 @@ export const useDoctorBySpecialization = (specializationId: string) => {
         }
     })
 };
+
+// get doctor specialization by doctor id
+export const useDoctorSpecialization = (doctorId: string) => {
+    return useQuery({
+        queryKey: ['doctor-specialization', doctorId],
+        queryFn: async () => {
+            const response = await axios.get(`${process.env.EXPO_PUBLIC_BASE_URL}/v1/specialization/${doctorId}`);
+
+            return response.data;
+        }
+    })
+};

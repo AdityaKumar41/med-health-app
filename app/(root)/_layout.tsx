@@ -5,9 +5,7 @@ import { useAccount } from "wagmi";
 
 
 const RootLayout = () => {
-  // const { isConnected, address, isReconnecting } = useAccount();
-  const isReconnecting = false;
-  const isConnected = true;
+  const { isConnected, address, isReconnecting } = useAccount();
 
   React.useEffect(() => {
     if (isReconnecting && !isConnected) {
