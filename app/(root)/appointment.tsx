@@ -18,6 +18,7 @@ interface Doctor {
   profile_picture: string;
   average_rating: number | null;
   hospital: string;
+  consultancy_fees: number;
 }
 
 const DoctorsScreen: React.FC = () => {
@@ -117,7 +118,7 @@ const DoctorsScreen: React.FC = () => {
                   <DoctorCard
                     name={doctor.name}
                     specialty={doctor.qualification || 'Specialist'}
-                    price={formatPrice(doctor.experience)}
+                    price={doctor.consultancy_fees || 0}
                     rating={doctor.average_rating?.toString() || 'N/A'}
                     imageUrl={doctor.profile_picture || 'https://cdn.builder.io/api/v1/image/assets/TEMP/e37229356691a4f10f5ae1f014d211357e18d13fe8f2a634748704b4c4201882'}
                   />

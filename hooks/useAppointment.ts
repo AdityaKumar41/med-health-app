@@ -2,7 +2,7 @@ import { AppointmentSchema } from "@/types/type";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 
-export const usePatientPost = (wallet_address: string) => {
+export const useAppointmentPost = (wallet_address: string) => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (appointment: AppointmentSchema) => {
@@ -37,7 +37,7 @@ export const usePatientPost = (wallet_address: string) => {
             }
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['patientquery'] });
+            queryClient.invalidateQueries({ queryKey: ['appointmentquery'] });
         }
     });
 };
@@ -57,8 +57,6 @@ export const useAppointment = (wallet_address: string) => {
                         Authorization: `Bearer ${wallet_address}`,
                     },
                 });
-
-                console.log('API Response:', response);
                 return response.data;
             } catch (error: any) {
                 if (error.code === 'ECONNABORTED') {

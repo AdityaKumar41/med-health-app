@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, Image, ScrollView, TouchableOpacity, TextInput, Alert } from "react-native";
 import * as ImagePicker from 'expo-image-picker';
 import { useAccount, useDisconnect } from "wagmi";
@@ -9,6 +9,7 @@ import { router } from "expo-router";
 import { MenuSectionProps } from "@/types/type";
 import { StatusBar } from "expo-status-bar";
 import { usePatient } from "@/hooks/usePatient";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const Account = () => {
   const { address, isConnected } = useAccount();
@@ -45,127 +46,124 @@ const Account = () => {
   }
 
   const userInfo = {
-    name: "Tonald Drump",
-    role: "Junior Full Stack Developer",
-    email: "Tonald@gmail.com",
-    location: "Taman Anggrek",
-    memberSince: "2023",
-    totalAppointments: 12,
-    healthScore: 85,
+    totalAppointments: data?.appointments?.length || 0,
+    totalReports: data?.reports?.length || 0,
     age: age,
   };
 
+  const handleOnPress = () => {
+    router.push({ pathname: "/(root)/report-viewer", params: { reports: data?.reports } });
+  }
+
   return (
-    <ScrollView className="flex-1 bg-gray-100">
-      {/* Header Section */}
-      <View className="bg-blue-600 pt-12 pb-24 rounded-b-[40px] shadow-lg">
-        <View className="px-4 flex-row justify-between items-center w-full">
-          <Text className="text-white text-lg font-JakartaBold">My Profile</Text>
-          <TouchableOpacity onPress={handleEditToggle}>
+    <SafeAreaView className="flex-1 bg-white">
+      <StatusBar style="dark" />
+
+      {/* Header */}
+      <View className="bg-white px-4 pt-6 pb-4">
+        <View className="flex-row items-center justify-between">
+          <Text className="text-2xl font-JakartaBold text-gray-900">My Profile</Text>
+          <TouchableOpacity
+            onPress={handleEditToggle}
+            className="bg-gray-100 p-2 rounded-full"
+          >
             <Ionicons
-              name={isEditing ? "checkmark-circle" : "create-outline"}
+              name={isEditing ? "checkmark" : "create-outline"}
               size={24}
-              color="white"
+              color="#374151"
             />
           </TouchableOpacity>
         </View>
       </View>
-      <View className="px-4 -mt-16">
-        <View className="bg-white rounded-3xl p-4 shadow-lg">
-          <View className="items-center">
-            <TouchableOpacity
-              onPress={isEditing ? pickImage : undefined}
-              className="relative"
-            >
-              <Image
-                source={{ uri: profileImage }}
-                className="w-24 h-24 rounded-full border-4 border-white shadow-lg"
-              />
-              {isEditing && (
-                <View className="absolute bottom-0 right-0 bg-blue-500 rounded-full p-1">
-                  <Ionicons name="camera" size={16} color="white" />
-                </View>
+
+      {/* Content */}
+      <ScrollView className="flex-1 bg-gray-50">
+        {/* Profile Card */}
+        <View className="px-4 mt-4">
+          <View className="bg-white rounded-3xl p-4 shadow-sm">
+            <View className="items-center">
+              <TouchableOpacity
+                onPress={isEditing ? pickImage : undefined}
+                className="relative"
+              >
+                <Image
+                  source={{ uri: profileImage }}
+                  className="w-24 h-24 rounded-full border-4 border-white shadow-sm"
+                />
+                {isEditing && (
+                  <View className="absolute bottom-0 right-0 bg-blue-500 rounded-full p-1">
+                    <Ionicons name="camera" size={16} color="white" />
+                  </View>
+                )}
+              </TouchableOpacity>
+
+              {isEditing ? (
+                <TextInput
+                  value={name}
+                  onChangeText={setName}
+                  className="font-JakartaBold text-2xl mt-2 text-center border-b border-gray-300 p-1"
+                />
+              ) : (
+                <Text className="font-JakartaBold text-2xl mt-2">{name}</Text>
               )}
-            </TouchableOpacity>
 
-            {isEditing ? (
-              <TextInput
-                value={name}
-                onChangeText={setName}
-                className="font-JakartaBold text-2xl mt-2 text-center border-b border-gray-300 p-1"
-              />
-            ) : (
-              <Text className="font-JakartaBold text-2xl mt-2">{name}</Text>
-            )}
+              {isConnected && (
+                <Text className="text-blue-500 text-sm mt-1">
+                  {address?.slice(0, 6)}...{address?.slice(-4)}
+                </Text>
+              )}
+            </View>
 
-            {isConnected && (
-              <Text className="text-blue-500 text-sm mt-1">
-                {address?.slice(0, 6)}...{address?.slice(-4)}
-              </Text>
-            )}
-          </View>
-
-          {/* Stats Cards */}
-          <View className="flex-row justify-between mt-6">
-            <StatCard title="Appointments" value={userInfo.totalAppointments} />
-            <StatCard title="Health Score" value={`${userInfo.healthScore}%`} />
+            {/* Stats Cards */}
+            <View className="flex-row justify-between mt-6">
+              <StatCard title="Appointments" value={userInfo.totalAppointments} />
+              <StatCard title="Reports" value={userInfo.totalReports} onPress={handleOnPress} />
+            </View>
           </View>
         </View>
-      </View>
 
-      {/* Menu Sections */}
-      <View className="px-4 mt-6 space-y-6">
-        {/* Personal Info Section */}
-        <MenuSection
-          title="Personal Information"
-          items={[
-            { icon: "person", label: "Age", value: data?.age },
-            { icon: "mail", label: "Email", value: data?.email },
-            { icon: "water-outline", label: "Blood Group", value: data?.blood_group },
-          ]}
-          isEditing={isEditing}
-          onValueChange={(label, value) => {
-            if (label === "Age") setAge(value);
-          }}
-        />
+        {/* Menu Sections */}
+        <View className="px-4 mt-6 space-y-6">
+          {/* Personal Info Section */}
+          <MenuSection
+            title="Personal Information"
+            items={[
+              { icon: "person", label: "Age", value: data?.age },
+              { icon: "mail", label: "Email", value: data?.email },
+              { icon: "water-outline", label: "Blood Group", value: data?.blood_group },
+            ]}
+            isEditing={isEditing}
+            onValueChange={(label, value) => {
+              if (label === "Age") setAge(value);
+            }}
+          />
 
-        {/* Quick Actions */}
-        <MenuSection
-          title="Quick Actions"
-          items={[
-            { icon: "document-text", label: "Medical Records" },
-            { icon: "calendar", label: "Appointments" },
-            { icon: "pulse", label: "Health Tracking" },
-          ]}
-          isEditing={false} // Always false as these are actions
-        />
+          {/* Settings */}
+          <MenuSection
+            title="Settings"
+            items={[
+              { icon: "settings", label: "Account Settings" },
+              { icon: "shield-checkmark", label: "Privacy" },
+              { icon: "help-circle", label: "Help & Support" },
+            ]}
+            isEditing={false} // Always false as these are navigation items
+          />
 
-        {/* Settings */}
-        <MenuSection
-          title="Settings"
-          items={[
-            { icon: "settings", label: "Account Settings" },
-            { icon: "shield-checkmark", label: "Privacy" },
-            { icon: "help-circle", label: "Help & Support" },
-          ]}
-          isEditing={false} // Always false as these are navigation items
-        />
-
-        {/* Wallet Connection */}
-        <View className="pb-6">
-          <Button text="Wallet Info !" onClick={open} />
+          {/* Wallet Connection */}
+          <View className="pb-6">
+            <Button text="Wallet Info !" onClick={open} />
+          </View>
         </View>
-      </View>
-      <StatusBar style="dark" />
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
-const StatCard = ({ title, value }: { title: String, value: number | string }) => (
-  <View className="bg-gray-50 p-4 rounded-xl w-[48%]">
+const StatCard = ({ title, value, onPress }: { title: String, value: number | string, onPress?: () => void }) => (
+  <TouchableOpacity className="bg-gray-50 p-4 rounded-xl w-[48%]" onPress={onPress}>
     <Text className="text-gray-500 text-sm font-JakartaMedium ">{title}</Text>
     <Text className="text-xl font-JakartaBold text-gray-800 ">{value}</Text>
-  </View>
+  </TouchableOpacity>
 );
 
 const MenuSection = ({ title, items, isEditing, onValueChange }: MenuSectionProps & {

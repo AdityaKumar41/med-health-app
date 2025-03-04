@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 interface DoctorCardProps {
   name: string;
   specialty: string;
-  price: string;
+  price: number;
   rating: string;
   imageUrl: string;
 }
@@ -33,7 +33,7 @@ export const DoctorCard: React.FC<DoctorCardProps> = ({
         </View>
       </View>
       <View className="justify-center items-end">
-        <Text className="text-primary font-JakartaBold">{price}</Text>
+        <Text className="text-primary font-JakartaBold">POL {price}</Text>
         <Text className="text-xs text-gray-400">Consultation Fee</Text>
       </View>
     </View>

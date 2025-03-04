@@ -11,12 +11,19 @@ import { SpecialityProps } from "@/types/type";
 const AppointmentBooking: React.FC = () => {
   const navigation = useNavigation();
   const router = useRouter();
-
-  const { data, error } = useSpecialization()
+  const { data, error } = useSpecialization();
+  const [searchQuery, setSearchQuery] = React.useState('');
 
   React.useEffect(() => {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
+
+  const filteredSpecialties = React.useMemo(() => {
+    return data.filter((specialty: SpecialityProps) =>
+      specialty.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      specialty.description.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [data, searchQuery]);
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -51,8 +58,10 @@ const AppointmentBooking: React.FC = () => {
               <View className="flex-1 h-full p-2 bg-white rounded-xl border border-gray-300">
                 <TextInput
                   className="h-full w-full"
-                  placeholder="Search Doctor !"
+                  placeholder="Search Specialties!"
                   aria-label="Search symptoms or diseases"
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
                 />
               </View>
               <TouchableOpacity className="w-16 h-16 justify-center items-center bg-[#F9F5FF] rounded-xl border border-gray-300">
@@ -62,7 +71,7 @@ const AppointmentBooking: React.FC = () => {
 
             {/* Specialties List */}
             <View className="py-3">
-              {data.map((specialty: SpecialityProps, index: number) => (
+              {filteredSpecialties.map((specialty: SpecialityProps, index: number) => (
                 <SpecialtyCard
                   key={index}
                   emoji={specialty.icon}
@@ -71,17 +80,6 @@ const AppointmentBooking: React.FC = () => {
                   onPress={() => router.push({ pathname: "/(root)/appointment", params: { id: specialty.id } })}
                 />
               ))}
-
-              <TouchableOpacity
-                className="flex-row gap-3 items-center px-4 py-2 mt-1"
-                accessibilityRole="button"
-                accessibilityLabel="See more specialties"
-              >
-                <Text className="text-base font-bold text-blue-700">
-                  See More
-                </Text>
-                <Ionicons name="chevron-forward" size={16} color="blue" />
-              </TouchableOpacity>
             </View>
           </View>
         </ScrollView>

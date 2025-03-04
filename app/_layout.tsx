@@ -20,10 +20,10 @@ import {
 import { ChatProvider } from "@/context/useChatProvider";
 import { NetworkProvider } from '@/context/NetworkContext';
 
-const queryClient = new QueryClient();
 
 // 1. Get projectId at https://cloud.reown.com
 const projectId = process.env.EXPO_PUBLIC_PROJECT_ID!;
+const queryClient = new QueryClient();
 
 // 2. Create config
 const metadata = {

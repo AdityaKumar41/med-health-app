@@ -16,9 +16,12 @@ import { Ionicons, MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
 import { Calendar } from 'react-native-calendars';
 import { Button } from '@/components/ui/Button';
 import { useDoctorbyId } from '@/hooks/useDoctor';
-import { usePatientPost } from '@/hooks/useAppointment';
-import { useAccount } from 'wagmi';
+import { useAppointmentPost } from '@/hooks/useAppointment';
+import { useAccount, useWriteContract } from 'wagmi';
 import { usePatient } from '@/hooks/usePatient';
+import { ethers } from 'ethers';
+import { useContractWrite } from 'wagmi';
+import ContractABI from "@/contract/Contract.json";
 
 // Define types
 interface TimeSlot {
@@ -47,6 +50,7 @@ const BookingScreen = () => {
     const navigation = useNavigation();
     const { doctorId, doctorName, day } = useLocalSearchParams();
     const { data: patient } = usePatient(walletAddress!)
+    const { writeContractAsync } = useWriteContract();
 
     // States
     const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -64,7 +68,7 @@ const BookingScreen = () => {
     const doctor = data?.data;
 
     // Use the appointment mutation hook
-    const { mutate: bookAppointment, isPending: isSubmitting, error: submissionError } = usePatientPost(walletAddress || '');
+    const { mutate: bookAppointment, isPending: isSubmitting, error: submissionError } = useAppointmentPost(walletAddress || '');
 
     // Hide default header
     useEffect(() => {
@@ -239,7 +243,7 @@ const BookingScreen = () => {
     };
 
     // Handle booking confirmation
-    const handleConfirmBooking = () => {
+    const handleConfirmBooking = async () => {
         if (!selectedDate || !selectedTimeSlot || !doctor) {
             Alert.alert('Booking Error', 'Please select both date and time for your appointment');
             return;
@@ -259,6 +263,19 @@ const BookingScreen = () => {
             // Calculate fees from doctor's experience - now as numbers
             const fee = doctor.consultancy_fees || 800;
 
+            // Prepare blockchain transaction on Polygon
+            const hash = await writeContractAsync({
+                address: process.env.EXPO_PUBLIC_CONTRACT_ADDRESS as `0x${string}`,
+                abi: ContractABI,
+                functionName: 'bookAppointment',
+                args: [doctor.wallet_address],
+                value: BigInt(ethers.utils.parseUnits(fee.toString(), 'ether').toString())
+            });
+
+            // Wait for transaction confirmation
+            // For Polygon, you might need to adjust confirmation wait times
+            console.log('Transaction hash:', hash);
+
             // Prepare the booking data according to the Zod schema
             const bookingData = {
                 patient_id: patient.id, // Ensure patient.id is available
@@ -266,7 +283,8 @@ const BookingScreen = () => {
                 date: appointmentDateTime,
                 appointment_fee: fee, // Send as number
                 amount_paid: fee, // Send as number
-                ticket_notes: `Appointment booked via mobile app for ${doctor.name}`
+                ticket_notes: `Appointment booked via mobile app for ${doctor.name}`,
+                tx_hash: hash // Store the transaction hash
             };
 
             // Call the mutation function to make the API request
@@ -993,3 +1011,4 @@ const BookingScreen = () => {
 };
 
 export default BookingScreen;
+

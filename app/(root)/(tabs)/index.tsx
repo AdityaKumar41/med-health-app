@@ -41,7 +41,7 @@ const services = [
     title: "Locate a Pharmacy",
     description: "Purchase Medicines",
     imageUri: images.pharmacy,
-    onPress: () => router.push("/(root)/appointment"),
+    onPress: () => router.push("/(root)/pharmacy"),
   },
 ];
 

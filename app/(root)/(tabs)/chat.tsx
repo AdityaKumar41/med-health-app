@@ -10,18 +10,39 @@ import { useAccount } from 'wagmi';
 import axios from 'axios';
 import { useDoctorsByIds } from '@/hooks/useDoctor';
 import { AppointmentSchema } from '@/types/type';
+import { useChat } from '@/context/useChatProvider';
+
+interface Specialty {
+  id: string;
+  specialty_id: string;
+  doctor_id: string;
+  specialty: {
+    id: string;
+    name: string;
+    slug: string;
+    description: string;
+    icon: string | null;
+    createdAt: string;
+    updatedAt: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
 
 interface Doctor {
-  profile_picture: string | undefined;
-  specialties: any;
   id: string;
+  doctor_id: string;
   name: string;
-  specialty: string;
-  imageUrl: string;
-  isOnline: boolean;
-  lastMessage: string;
-  lastMessageTime: string;
-  unreadCount?: number;
+  email: string;
+  age: number;
+  wallet_address: string;
+  profile_picture: string;
+  hospital: string;
+  experience: number;
+  qualification: string;
+  bio: string;
+  specialties: Specialty[];
+  // ...other properties...
 }
 
 const Chat = () => {
@@ -30,7 +51,7 @@ const Chat = () => {
   const { address } = useAccount();
   const { data: patientData, error: patientError } = usePatient(address!);
   const { data: doctorsResponse, error: doctorsError, isLoading } = useDoctorsByIds(doctorIds);
-
+  const { onlineUsers } = useChat();
 
   useEffect(() => {
     if (patientData) {
@@ -39,11 +60,25 @@ const Chat = () => {
     }
   }, [patientData]);
 
-  const handleChatPress = (doctorId: string) => {
-    const appointment = patientData.appointments.find((appt: any) => appt.doctor_id === doctorId);
-    if (appointment && appointment.status === 'pending') {
-      router.push({ pathname: '/(root)/chating', params: { doctorId } });
+  const handleChatPress = (doctor: Doctor) => {
+    const appointment = patientData.appointments.find((appt: any) => appt.doctor_id === doctor.id);
+    if (appointment.status !== 'pending') {
+      router.push({
+        pathname: '/(root)/chating',
+        params: {
+          doctorId: doctor.id,
+          doctorName: doctor.name,
+          profilePicture: doctor.profile_picture,
+          specialty: doctor.specialties.map(spec => spec.specialty.name).join(', ')
+        }
+      });
     }
+  };
+
+  const isAppointmentPending = (doctorId: string) => {
+    return patientData?.appointments.some(
+      (appt: any) => appt.doctor_id === doctorId && appt.status === 'pending'
+    );
   };
 
   const filteredDoctors = useMemo(() => {
@@ -94,8 +129,8 @@ const Chat = () => {
             <TouchableOpacity
               key={doctor.id}
               className="px-4 py-3 bg-white border-b border-gray-100 flex-row items-center"
-              onPress={() => handleChatPress(doctor.id)}
-              disabled={!patientData.appointments.some((appt: any) => appt.doctor_id === doctor.id && appt.status === 'pending')}
+              onPress={() => handleChatPress(doctor)}
+              disabled={isAppointmentPending(doctor.id)}
             >
               {/* Doctor Avatar with Online Status */}
               <View className="relative">
@@ -103,9 +138,9 @@ const Chat = () => {
                   source={{ uri: doctor.profile_picture }}
                   className="w-16 h-16 rounded-full"
                 />
-                {doctor.isOnline && (
+                {onlineUsers.has(doctor.id) ? (
                   <View className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white" />
-                )}
+                ) : <View className="absolute bottom-0 right-0 w-4 h-4 bg-red-500 rounded-full border-2 border-white" />}
               </View>
 
               {/* Chat Details */}
@@ -114,30 +149,19 @@ const Chat = () => {
                   <Text className="font-JakartaBold text-gray-900 text-base">
                     {doctor.name}
                   </Text>
-                  <Text className="text-gray-500 text-sm">
-                    {/* {doctor.lastMessageTime} */}
-                    12:00 PM
-                  </Text>
+                  {isAppointmentPending(doctor.id) ? (
+                    <Ionicons name="lock-closed" size={16} color="#9CA3AF" />
+                  ) : (
+                    <Text className="text-gray-500 text-sm">
+                      12:00 PM
+                    </Text>
+                  )}
                 </View>
 
                 <Text className="font-JakartaMedium text-xs text-blue-600 mb-1">
-                  {doctor.specialties.map((specialty: any) => specialty).join(', ')}
+                  {doctor.specialties.map(spec => spec.specialty.name).join(', ')}
                 </Text>
-
-                <View className="flex-row justify-between items-center">
-                  <Text className="text-gray-500 font-Jakarta text-sm" numberOfLines={1}>
-                    {/* {doctor.lastMessage} */}
-                    Good take care
-                  </Text>
-                  {doctor.unreadCount && (
-                    <View className="bg-blue-500 rounded-full w-5 h-5 items-center justify-center">
-                      <Text className="text-white text-xs font-JakartaBold">
-                        {/* {doctor.unreadCount} */}
-                        2
-                      </Text>
-                    </View>
-                  )}
-                </View>
+                {/*  */}
               </View>
             </TouchableOpacity>
           ))

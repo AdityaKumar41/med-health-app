@@ -9,12 +9,12 @@ import { useAccount } from "wagmi";
 
 const IndexPage = () => {
   const { address } = useAccount();
-  const { data } = usePatient(address!);
+  console.log(address)
 
-  if (!data) {
-    return <Redirect href={"/(auth)/welcome"} />;
+  if (address) {
+    return <Redirect href={"/(root)/(tabs)"} />;
   }
-  return <Redirect href={"/(root)/(tabs)"} />;
+  return <Redirect href={"/(auth)/welcome"} />;
 
 };
 

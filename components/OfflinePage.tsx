@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 
 interface OfflinePageProps {
@@ -7,50 +7,26 @@ interface OfflinePageProps {
 
 export const OfflinePage = ({ onRetry }: OfflinePageProps) => {
     return (
-        <View style={styles.container}>
-            <MaterialIcons name="wifi-off" size={64} color="#666" />
-            <Text style={styles.title}>No Internet Connection</Text>
-            <Text style={styles.message}>
-                Please check your internet connection and try again
-            </Text>
-            <TouchableOpacity style={styles.retryButton} onPress={onRetry}>
-                <Text style={styles.retryText}>Retry</Text>
-            </TouchableOpacity>
+        <View className="flex-1 justify-center items-center p-5 bg-white">
+            <View className="bg-gray-50 p-8 rounded-2xl items-center shadow-sm">
+                <View className="bg-gray-100 p-4 rounded-full mb-4">
+                    <MaterialIcons name="wifi-off" size={48} color="#666" />
+                </View>
+                <Text className="text-xl font-jakarta-bold text-gray-800 mb-2">
+                    No Internet Connection
+                </Text>
+                <Text className="text-base font-jakarta-regular text-gray-600 text-center mb-6">
+                    Please check your internet connection and try again
+                </Text>
+                <TouchableOpacity
+                    className="bg-primary px-6 py-3 rounded-xl active:opacity-80"
+                    onPress={onRetry}
+                >
+                    <Text className="text-white font-jakarta-medium text-base">
+                        Try Again
+                    </Text>
+                </TouchableOpacity>
+            </View>
         </View>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        padding: 20,
-        backgroundColor: "#fff",
-    },
-    title: {
-        fontSize: 20,
-        fontWeight: "bold",
-        marginTop: 16,
-        marginBottom: 8,
-        fontFamily: "Jakarta-Bold",
-    },
-    message: {
-        fontSize: 16,
-        textAlign: "center",
-        color: "#666",
-        marginBottom: 24,
-        fontFamily: "Jakarta-Regular",
-    },
-    retryButton: {
-        backgroundColor: "#007AFF",
-        paddingHorizontal: 24,
-        paddingVertical: 12,
-        borderRadius: 8,
-    },
-    retryText: {
-        color: "#fff",
-        fontSize: 16,
-        fontFamily: "Jakarta-Medium",
-    },
-});

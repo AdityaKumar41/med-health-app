@@ -5,6 +5,7 @@ import { Text } from "react-native";
 import { router } from "expo-router";
 import { images } from "@/constants/image";
 import { useAccount } from "wagmi";
+import { usePatient } from "@/hooks/usePatient";
 
 const Index = () => {
 
@@ -16,13 +17,13 @@ const Index = () => {
   };
 
   const { address } = useAccount()
-  console.log(address)
+  const { data } = usePatient(address!)
 
   useEffect(() => {
-    if (address) {
+    if (data) {
       router.replace("/(root)/(tabs)");
     }
-  }, [address])
+  }, [address, data]);
 
   return (
     <View className="flex-col items-center h-full w-full bg-white rounded-3xl max-w-[480px]">

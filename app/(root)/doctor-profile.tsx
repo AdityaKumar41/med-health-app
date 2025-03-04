@@ -372,21 +372,23 @@ const DoctorProfileScreen: React.FC = () => {
                         </View>
 
                         {/* Consultation Fee and Book Button */}
-                        <View className="bg-white mx-3 mb-6 rounded-xl p-4 shadow-sm flex-row justify-between items-center">
-                            <View>
-                                <Text className="text-sm text-gray-500 mb-1">
-                                    Consultation Fee
-                                </Text>
-                                <Text className="text-xl font-JakartaBold text-gray-800">
-                                    POL {doctor.consultancy_fees}
-                                </Text>
-                            </View>
+                        <View className="bg-white mx-3 mb-6 rounded-xl p-4 shadow-sm">
+                            <View className="flex-row justify-between items-center flex-wrap gap-2">
+                                <View className="flex-shrink">
+                                    <Text className="text-sm text-gray-500 mb-1">
+                                        Consultation Fee
+                                    </Text>
+                                    <Text className="text-xl font-JakartaBold text-gray-800">
+                                        POL {doctor.consultancy_fees}
+                                    </Text>
+                                </View>
 
-                            <Button
-                                onClick={handleBookAppointment}
-                                text="Book Appointment"
-                                className='w-[100px]'
-                            />
+                                <Button
+                                    onClick={handleBookAppointment}
+                                    text="Book Appointment"
+                                    className='min-w-[150px]'
+                                />
+                            </View>
                         </View>
                     </ScrollView>
                 </>

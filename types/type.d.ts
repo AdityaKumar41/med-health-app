@@ -106,3 +106,15 @@ export interface SpecialityProps {
   description: string;
   icon?: string;
 }
+
+
+export interface ReportSchema {
+  patient_id: string;
+  title: string;
+  description: string;
+  file_url: string;
+  file_type: string;
+  file_size: number;
+  report_type: string;
+  report_date: string;
+}
