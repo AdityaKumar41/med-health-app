@@ -249,8 +249,14 @@ const BookingScreen = () => {
             return;
         }
 
-        if (!patient || !patient.id) {
-            Alert.alert('Booking Error', 'Patient information is missing. Please try again.');
+        // Check if patient data is loaded and has an ID
+        if (!patient) {
+            Alert.alert('Booking Error', 'Patient information is not loaded yet. Please wait a moment and try again.');
+            return;
+        }
+
+        if (!patient.id) {
+            Alert.alert('Booking Error', 'Your patient profile is incomplete. Please update your profile first.');
             return;
         }
 
@@ -276,6 +282,9 @@ const BookingScreen = () => {
             // For Polygon, you might need to adjust confirmation wait times
             console.log('Transaction hash:', hash);
 
+            // Add a debug log to check what's available in patient data
+            console.log("Patient data before booking:", patient);
+
             // Prepare the booking data according to the Zod schema
             const bookingData = {
                 patient_id: patient.id, // Ensure patient.id is available
@@ -287,12 +296,25 @@ const BookingScreen = () => {
                 tx_hash: hash // Store the transaction hash
             };
 
+            // Log the data we're about to send
+            console.log("Booking data being sent:", bookingData);
+
             // Call the mutation function to make the API request
             bookAppointment(bookingData, {
                 onSuccess: (response: any) => {
+                    console.log("Booking success response:", response);
                     setIsBookingLoading(false);
 
-                    // Create receipt data
+                    // Make sure response contains the needed data
+                    if (!response.appointment) {
+                        Alert.alert(
+                            'Booking Incomplete',
+                            'Your payment was processed but we couldn\'t confirm your appointment details. Please contact support.'
+                        );
+                        return;
+                    }
+
+                    // Create receipt data with fallbacks for missing fields
                     setReceipt({
                         doctorName: doctor.name,
                         doctorSpecialty: doctor.specialties ? doctor.specialties.map((specialty: any) => specialty.name).join(', ') : 'General Physician',
@@ -304,24 +326,26 @@ const BookingScreen = () => {
                         }),
                         appointmentTime: selectedTimeSlot,
                         appointmentFee: fee, // Store as number
-                        bookingId: response.appointment.id,
-                        ticketNumber: response.ticket.ticket_number,
-                        qrCode: response.ticket.qr_code
+                        bookingId: response.appointment?.id || 'Pending',
+                        ticketNumber: response.ticket?.ticket_number || 'Pending',
+                        qrCode: response.ticket?.qr_code
                     });
 
                     setShowReceipt(true);
                 },
-                onError: (error: { message: any; }) => {
+                onError: (error: any) => {
                     setIsBookingLoading(false);
+                    console.error("Booking error:", error);
                     Alert.alert(
                         'Booking Failed',
-                        `Unable to book appointment: ${error.message || 'Please try again later'}`
+                        `Unable to book appointment: ${error?.message || 'Please try again later'}`
                     );
                 }
             });
         } catch (error: any) {
             setIsBookingLoading(false);
-            Alert.alert('Booking Error', error.message || 'An unexpected error occurred');
+            console.error("Confirmation error:", error);
+            Alert.alert('Booking Error', error?.message || 'An unexpected error occurred');
         }
     };
 

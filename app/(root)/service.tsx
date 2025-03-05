@@ -1,7 +1,7 @@
 import { SpecialtyCard } from "@/components/SpecialtyCard";
 import { Ionicons } from "@expo/vector-icons";
 import * as React from "react";
-import { View, Text, TouchableOpacity, ScrollView, TextInput } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, TextInput, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "react-native";
 import { useNavigation, useRouter } from "expo-router";
@@ -11,7 +11,7 @@ import { SpecialityProps } from "@/types/type";
 const AppointmentBooking: React.FC = () => {
   const navigation = useNavigation();
   const router = useRouter();
-  const { data, error } = useSpecialization();
+  const { data, error, isLoading } = useSpecialization();
   const [searchQuery, setSearchQuery] = React.useState('');
 
   React.useEffect(() => {
@@ -19,6 +19,7 @@ const AppointmentBooking: React.FC = () => {
   }, [navigation]);
 
   const filteredSpecialties = React.useMemo(() => {
+    if (!data) return [];
     return data.filter((specialty: SpecialityProps) =>
       specialty.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       specialty.description.toLowerCase().includes(searchQuery.toLowerCase())
@@ -71,15 +72,24 @@ const AppointmentBooking: React.FC = () => {
 
             {/* Specialties List */}
             <View className="py-3">
-              {filteredSpecialties.map((specialty: SpecialityProps, index: number) => (
-                <SpecialtyCard
-                  key={index}
-                  emoji={specialty.icon}
-                  title={specialty.name}
-                  description={specialty.description}
-                  onPress={() => router.push({ pathname: "/(root)/appointment", params: { id: specialty.id } })}
-                />
-              ))}
+              {isLoading ? (
+                <View className="py-10 flex items-center justify-center">
+                  <ActivityIndicator size="large" color="#6E62EE" />
+                  <Text className="mt-4 text-base font-JakartaMedium text-gray-600">
+                    Loading specialties...
+                  </Text>
+                </View>
+              ) : (
+                filteredSpecialties.map((specialty: SpecialityProps, index: number) => (
+                  <SpecialtyCard
+                    key={index}
+                    emoji={specialty.icon}
+                    title={specialty.name}
+                    description={specialty.description}
+                    onPress={() => router.push({ pathname: "/(root)/appointment", params: { id: specialty.id } })}
+                  />
+                ))
+              )}
             </View>
           </View>
         </ScrollView>

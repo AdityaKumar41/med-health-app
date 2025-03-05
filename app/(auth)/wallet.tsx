@@ -11,9 +11,12 @@ const Wallet = () => {
   const { open } = useAppKit();
   const { address, chainId, status } = useAccount();
   console.log(address, chainId, status)
-  if (address) {
-    router.replace("/(auth)/register");
-  }
+
+  useEffect(() => {
+    if (address && chainId) {
+      router.push("/(auth)/register");
+    }
+  }, [status]);
 
   return (
     <View className="flex-col items-center h-full w-full bg-white rounded-3xl max-w-[480px]">

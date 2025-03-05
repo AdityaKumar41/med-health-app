@@ -34,7 +34,7 @@ const services = [
     title: "Request Consultation",
     description: "Talk to specialist",
     imageUri: images.request,
-    onPress: () => router.push("/(root)/appointment"),
+    onPress: () => router.push("/(root)/doctor"),
   },
   {
     bgColor: "bg-red-50",

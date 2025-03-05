@@ -1,7 +1,7 @@
 {
   "name": "pn-health",
   "main": "expo-router/entry",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "scripts": {
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
@@ -24,7 +24,8 @@
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
     "@reown/appkit-wagmi-react-native": "^1.2.0",
-    "@tanstack/react-query": "^5.65.1",
+    "@tanstack/react-query": "^5.67.1",
+    "@walletconnect/keyvaluestorage": "^1.1.1",
     "@walletconnect/react-native-compat": "^2.18.0",
     "axios": "^1.7.9",
     "ethers": "5.7.2",
@@ -55,7 +56,6 @@
     "react-native-calendars": "^1.1310.0",
     "react-native-gesture-handler": "~2.20.2",
     "react-native-get-random-values": "~1.11.0",
-    "react-native-maps": "1.18.0",
     "react-native-modal": "^13.0.1",
     "react-native-reanimated": "~3.16.1",
     "react-native-safe-area-context": "4.12.0",

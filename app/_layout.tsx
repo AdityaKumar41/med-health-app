@@ -23,14 +23,13 @@ import { NetworkProvider } from '@/context/NetworkContext';
 
 // 1. Get projectId at https://cloud.reown.com
 const projectId = process.env.EXPO_PUBLIC_PROJECT_ID!;
-const queryClient = new QueryClient();
 
 // 2. Create config
 const metadata = {
-  name: "AppKit RN",
-  description: "AppKit RN Example",
-  url: "https://reown.com/appkit",
-  icons: ["https://avatars.githubusercontent.com/u/179229932"],
+  name: "Med Health",
+  description: "Med Health is a decentralized health platform.",
+  url: "https://www.adityam.live/projects/med-health-app",
+  icons: ["https://avatars.githubusercontent.com/u/119885098"],
   redirect: {
     native: "YOUR_APP_SCHEME://",
     universal: "YOUR_APP_UNIVERSAL_LINK.com",
@@ -50,6 +49,7 @@ createAppKit({
 });
 
 export default function RootLayout() {
+  const queryClient = new QueryClient();
   const { isConnected } = useNetInfo();
   const [loaded] = useFonts({
     "Jakarta-Bold": require("../assets/fonts/PlusJakartaSans-Bold.ttf"),

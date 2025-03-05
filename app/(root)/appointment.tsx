@@ -21,7 +21,7 @@ interface Doctor {
   consultancy_fees: number;
 }
 
-const DoctorsScreen: React.FC = () => {
+const AppointmentScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   // get details from params
   const { id } = useLocalSearchParams()
@@ -32,12 +32,6 @@ const DoctorsScreen: React.FC = () => {
   useEffect(() => {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
-
-  // Format price based on doctor experience
-  const formatPrice = (experience: number) => {
-    const basePrice = 100000 + (experience * 5000);
-    return `INR. ${basePrice.toLocaleString()}`;
-  };
 
   // Get doctors from API response
   const apiDoctors = data?.data || [];
@@ -80,18 +74,6 @@ const DoctorsScreen: React.FC = () => {
                 />
               </View>
             </View>
-
-            {/* Filter Pills */}
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              className="flex-row mt-4 gap-3"
-            >
-              <FilterButton label="Available Today" />
-              <FilterButton label="Gender" />
-              <FilterButton label="Price" />
-              <FilterButton label="Rating" />
-            </ScrollView>
           </View>
 
           {/* Doctors List */}
@@ -136,4 +118,4 @@ const DoctorsScreen: React.FC = () => {
   );
 };
 
-export default DoctorsScreen;
+export default AppointmentScreen;

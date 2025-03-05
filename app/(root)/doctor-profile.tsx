@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
     View,
     Text,
@@ -7,15 +7,15 @@ import {
     TouchableOpacity,
     ActivityIndicator,
     Share,
+    StyleSheet,
 } from 'react-native';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
-import MapView, { Marker } from 'react-native-maps';
 import { useDoctorbyId } from '@/hooks/useDoctor';
 import { Button } from '@/components/ui/Button';
-import * as FileSystem from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
+import WebView from 'react-native-webview';
+import mapTemplate from '../../maps-template';
 
 // Define doctor type based on the response data
 interface DoctorAvailableTime {
@@ -43,6 +43,7 @@ const specialtyNames: Record<string, string> = {
 
 const DoctorProfileScreen: React.FC = () => {
     const navigation = useNavigation();
+    const webRef = useRef<WebView>(null);
 
     React.useEffect(() => {
         navigation.setOptions({ headerShown: false });
@@ -167,6 +168,68 @@ const DoctorProfileScreen: React.FC = () => {
         }
     };
 
+    // Handle map events coming from WebView
+    const handleMapEvent = (event: any) => {
+        console.log('Map Event:', event.nativeEvent.data);
+    };
+
+    // Modify mapTemplate to include doctor's coordinates and add a marker
+    const getMapTemplate = () => {
+        if (!doctor) return mapTemplate;
+
+        const lat = parseLocation(doctor.location_lat);
+        const lng = parseLocation(doctor.location_lng);
+
+        if (lat === null || lng === null || isNaN(lat)) {
+            return mapTemplate;
+        }
+
+        // Replace the center coordinates and add a marker
+        // Using a lower zoom level (12 instead of 15) to show more context
+        let customTemplate = mapTemplate
+            .replace('[-121.913, 37.361]', `[${lng}, ${lat}]`)
+            .replace('zoom: 15', 'zoom: 13')
+            .replace('// create the map', `
+            // create the map
+            const doctorLocation = [${lng}, ${lat}];
+            `);
+
+        // Insert marker code before the final script closing tag
+        const insertPosition = customTemplate.lastIndexOf('</script>');
+        if (insertPosition !== -1) {
+            const markerCode = `
+            // Add a marker at the doctor's location with a custom element
+            const markerElement = document.createElement('div');
+            markerElement.className = 'custom-marker';
+            
+            // Add a marker at the doctor's location
+            const marker = new tt.Marker({
+                element: markerElement,
+                anchor: 'bottom'
+            })
+                .setLngLat(doctorLocation)
+                .addTo(map);
+                
+            // Add a popup with doctor info
+            new tt.Popup({
+                offset: 40,
+                closeButton: false,
+                className: 'doctor-popup'
+            })
+                .setLngLat(doctorLocation)
+                .setHTML('<div class="popup-content"><strong>${doctor.name}</strong><p>${doctor.hospital}</p></div>')
+                .addTo(map);
+            `;
+
+            customTemplate =
+                customTemplate.substring(0, insertPosition) +
+                markerCode +
+                customTemplate.substring(insertPosition);
+        }
+
+        return customTemplate;
+    };
+
     return (
         <SafeAreaView className="flex-1 bg-gray-50">
             {isLoading ? (
@@ -262,48 +325,16 @@ const DoctorProfileScreen: React.FC = () => {
                                 </Text>
                             </View>
 
-                            {/* Map View with improved error handling */}
+                            {/* Map View with WebView */}
                             {hasValidCoordinates() ? (
                                 <View className="h-[180px] rounded-lg mt-2 overflow-hidden">
-                                    <MapView
-                                        style={{ flex: 1 }}
-                                        initialRegion={{
-                                            latitude: parseLocation(doctor.location_lat),
-                                            longitude: parseLocation(doctor.location_lng),
-                                            latitudeDelta: 0.01,
-                                            longitudeDelta: 0.01,
-                                        }}
-                                        customMapStyle={[
-                                            {
-                                                "featureType": "water",
-                                                "elementType": "geometry",
-                                                "stylers": [{ "color": "#E9E9E9" }]
-                                            },
-                                            {
-                                                "featureType": "road",
-                                                "elementType": "geometry",
-                                                "stylers": [{ "color": "#FFFFFF" }]
-                                            },
-                                            {
-                                                "featureType": "landscape",
-                                                "elementType": "geometry",
-                                                "stylers": [{ "color": "#F5F5F5" }]
-                                            }
-                                        ]}
-                                    >
-                                        <Marker
-                                            coordinate={{
-                                                latitude: parseLocation(doctor.location_lat),
-                                                longitude: parseLocation(doctor.location_lng),
-                                            }}
-                                            title={doctor.name}
-                                            description={doctor.hospital}
-                                        >
-                                            <View className="bg-blue-600 p rounded-lg">
-                                                <MaterialIcons name="local-hospital" size={24} color="#FFFFFF" />
-                                            </View>
-                                        </Marker>
-                                    </MapView>
+                                    <WebView
+                                        ref={webRef}
+                                        onMessage={handleMapEvent}
+                                        style={styles.map}
+                                        originWhitelist={['*']}
+                                        source={{ html: getMapTemplate() }}
+                                    />
                                 </View>
                             ) : (
                                 <View className="h-[180px] rounded-lg overflow-hidden mt-2 bg-gray-100 justify-center items-center">
@@ -406,5 +437,15 @@ const DoctorProfileScreen: React.FC = () => {
         </SafeAreaView>
     );
 };
+
+// Add styles for the WebView map
+const styles = StyleSheet.create({
+    map: {
+        flex: 1,
+        width: '100%',
+        height: '100%',
+        borderRadius: 8,
+    }
+});
 
 export default DoctorProfileScreen;

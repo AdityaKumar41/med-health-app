@@ -171,7 +171,7 @@ const History = () => {
               {item.doctor.hospital}
             </Text>
             <Text className="text-gray-400 text-xs mt-1">
-              {`Fee: ${item.appointment_fee} ETH`}
+              {`Fee: ${item.appointment_fee} POL`}
             </Text>
           </View>
 

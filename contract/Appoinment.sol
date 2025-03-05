@@ -11,6 +11,7 @@ contract DoctorAppointment {
         uint256 amountPaid;
         uint256 bookingTime;
         bool isActive;
+        string cancellationReason;
     }
 
     mapping(uint256 => Appointment) public appointments;
@@ -24,7 +25,7 @@ contract DoctorAppointment {
         uint256 bookingTime
     );
 
-    event AppointmentCancelled(uint256 appointmentId, address indexed patient);
+    event AppointmentCancelled(uint256 appointmentId, address indexed patient, string reason);
     event CommissionWithdrawn(address indexed owner, uint256 amount);
 
     constructor() {
@@ -42,8 +43,9 @@ contract DoctorAppointment {
         uint256 commission = (msg.value * commissionPercentage) / 100;
         uint256 doctorPayment = msg.value - commission;
 
-        // Transfer doctor's share
+        // Transfer doctor's share - we only send the doctor's portion
         payable(_doctor).transfer(doctorPayment);
+        // Commission stays in the contract for later withdrawal by owner
 
         // Store appointment details
         appointmentCounter++;
@@ -52,7 +54,8 @@ contract DoctorAppointment {
             _doctor,
             msg.value,
             block.timestamp,
-            true
+            true,
+            ""
         );
 
         emit AppointmentBooked(appointmentCounter, msg.sender, _doctor, msg.value, block.timestamp);
@@ -66,13 +69,14 @@ contract DoctorAppointment {
         return block.timestamp <= expiryTime;
     }
 
-    function cancelAppointment(uint256 _appointmentId) external {
+    function cancelAppointment(uint256 _appointmentId, string calldata _reason) external {
         Appointment storage app = appointments[_appointmentId];
         require(msg.sender == app.patient, "Not your appointment");
         require(app.isActive, "Already cancelled");
 
         app.isActive = false;
-        emit AppointmentCancelled(_appointmentId, msg.sender);
+        app.cancellationReason = _reason;
+        emit AppointmentCancelled(_appointmentId, msg.sender, _reason);
     }
 
     function withdrawCommission() external onlyOwner {
@@ -87,9 +91,10 @@ contract DoctorAppointment {
         address doctor,
         uint256 amountPaid,
         uint256 bookingTime,
-        bool isActive
+        bool isActive,
+        string memory cancellationReason
     ) {
         Appointment memory app = appointments[_appointmentId];
-        return (app.patient, app.doctor, app.amountPaid, app.bookingTime, app.isActive);
+        return (app.patient, app.doctor, app.amountPaid, app.bookingTime, app.isActive, app.cancellationReason);
     }
 }

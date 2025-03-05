@@ -54,3 +54,13 @@ export const useDoctorsByIds = (doctorIds: string[]) => {
         }
     });
 }
+
+export const useGetAllDoctors = () => {
+    return useQuery({
+        queryKey: ["all-doctors"],
+        queryFn: async () => {
+            const response = await axios.get(`${process.env.EXPO_PUBLIC_BASE_URL}/v1/doctors`);
+            return response.data;
+        }
+    });
+}
