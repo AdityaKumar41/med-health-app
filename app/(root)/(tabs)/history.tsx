@@ -142,19 +142,19 @@ const History = () => {
   const renderAppointment = ({ item }: { item: Appointment }) => (
     <TouchableOpacity
       className="mb-4 bg-white rounded-xl shadow mx-4 overflow-hidden border border-gray-100"
-      onPress={() => {
-        if (item.doctor.id) {
-          router.push({
-            pathname: "/chating",
-            params: {
-              doctorId: item.doctor.id,
-              doctorName: item.doctor.name,
-              profilePicture: item.doctor.profile_picture,
-              specialty: item.doctor.specialties.map(s => s.specialty_id).join(", ") || ""
-            }
-          });
-        }
-      }}
+    // onPress={() => {
+    //   if (item.doctor.id) {
+    //     router.push({
+    //       pathname: "/chating",
+    //       params: {
+    //         doctorId: item.doctor.id,
+    //         doctorName: item.doctor.name,
+    //         profilePicture: item.doctor.profile_picture,
+    //         specialty: item.doctor.specialties.map(s => s.specialty_id).join(", ") || ""
+    //       }
+    //     });
+    //   }
+    // }}
     >
       <View className="p-4">
         <View className="flex-row">
@@ -215,17 +215,17 @@ const History = () => {
           <View className="mt-2 flex-row justify-end">
             <TouchableOpacity
               className="flex-row items-center bg-blue-50 px-3 py-1 rounded-full"
-              onPress={() => {
-                router.push({
-                  pathname: "/chating",
-                  params: {
-                    doctorId: item.doctor.id,
-                    doctorName: item.doctor.name,
-                    profilePicture: item.doctor.profile_picture,
-                    specialty: item.doctor.specialties.map(s => s.specialty_id).join(", ") || ""
-                  }
-                });
-              }}
+            // onPress={() => {
+            //   router.push({
+            //     pathname: "/chating",
+            //     params: {
+            //       doctorId: item.doctor.id,
+            //       doctorName: item.doctor.name,
+            //       profilePicture: item.doctor.profile_picture,
+            //       specialty: item.doctor.specialties.map(s => s.specialty_id).join(", ") || ""
+            //     }
+            //   });
+            // }}
             >
               <Ionicons name="chatbox-ellipses-outline" size={14} color="#3b82f6" />
               <Text className="text-blue-500 font-JakartaSemiBold ml-1 text-xs">Message Doctor</Text>

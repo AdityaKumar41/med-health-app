@@ -119,6 +119,9 @@ const ChatRoom = () => {
         loadCachedMessages();
     }, [doctorId, data?.id]);
 
+    // Add a message tracking ref to prevent duplicates
+    const processedMessageIds = useRef(new Set<string>());
+
     // Socket connection and message handling with caching
     useEffect(() => {
         if (!socket) return;
@@ -148,6 +151,11 @@ const ChatRoom = () => {
                     fileName: extractFileName(msg.file_url)
                 }));
 
+                // Track message IDs to prevent duplicates
+                formattedPreviousMessages.forEach(msg => {
+                    if (msg.id) processedMessageIds.current.add(msg.id);
+                });
+
                 setMessages(formattedPreviousMessages);
 
                 // Cache messages for future use
@@ -163,8 +171,16 @@ const ChatRoom = () => {
             setInitialLoadComplete(true);
         });
 
+        // Clear previous listeners before setting up new ones
+        socket.off('receive-message');
+
         // Listen for new messages
         socket.on('receive-message', async (message: Message) => {
+            // Skip if we've already processed this message
+            if (message.id && processedMessageIds.current.has(message.id)) {
+                return;
+            }
+
             const newMsg = {
                 ...message,
                 timestamp: message.sentAt || new Date(message.timestamp),
@@ -172,6 +188,11 @@ const ChatRoom = () => {
                 fileType: message.file_type ? determineFileType(message.file_type) : message.fileType,
                 fileName: message.fileName || extractFileName(message.file_url || message.fileUrl || '')
             };
+
+            // Mark this message as processed
+            if (message.id) {
+                processedMessageIds.current.add(message.id);
+            }
 
             // Update state
             setMessages(prev => {
@@ -207,29 +228,12 @@ const ChatRoom = () => {
         isInitialRender.current = false;
     }, []);
 
+    // Modify the handleSend function to avoid displaying local message before server response
     const handleSend = () => {
         if (!newMessage.trim() || !socket) return;
 
-        const message: Message = {
-            sender: socket.id || '',
-            message: newMessage,
-            timestamp: new Date(),
-        };
-
-        // Update local state immediately for responsive feel
-        setMessages(prev => {
-            const updatedMessages = [...prev, message];
-
-            // Cache messages including this new one
-            try {
-                const cacheKey = getChatCacheKey();
-                AsyncStorage.setItem(cacheKey, JSON.stringify(updatedMessages));
-            } catch (error) {
-                console.error('Failed to cache messages with new message:', error);
-            }
-
-            return updatedMessages;
-        });
+        // Don't add message locally - let the socket event handle it
+        // This prevents duplicate messages
 
         sendMessage(doctorId as string, newMessage);
         setNewMessage('');
@@ -312,7 +316,7 @@ const ChatRoom = () => {
         if (!socket) return;
 
         // Remove the base URL if it's present to store relative path
-        const relativeUrl = fileUrl.replace(process.env.EXPO_PUBLIC_AWS_S3_URL || '', '');
+        const relativeUrl = fileUrl.replace(`${process.env.EXPO_PUBLIC_AWS_S3_URL}/`, '');
         const message = fileType.includes('image') ? '📷 Image' : '📄 Document';
 
         sendMessage(
@@ -342,8 +346,8 @@ const ChatRoom = () => {
                 }
             });
 
-            // Get the full file URL
-            const fileUrl = `${process.env.EXPO_PUBLIC_AWS_S3_URL}${key}`;
+            // Construct the correct file URL that matches how ReportViewer expects it
+            const fileUrl = `${process.env.EXPO_PUBLIC_AWS_S3_URL}/${key}`;
 
             // Send message with file
             await handleSendFile(fileUrl, fileType);
@@ -376,7 +380,7 @@ const ChatRoom = () => {
 
         try {
             // Get the last part of the URL after the last slash
-            const parts = url.split('/');
+            const parts = decodeURIComponent(url).split('/');
             const fileName = parts[parts.length - 1];
 
             // Remove query parameters if present
@@ -386,57 +390,94 @@ const ChatRoom = () => {
         }
     };
 
+    // Ensure URL is complete
+    const getFullUrl = (url: string | undefined): string => {
+        if (!url) return '';
+
+        // If it already has the protocol, return as is
+        if (url.startsWith('http')) return url;
+
+        // Make sure there's a single slash between base URL and the path
+        if (url.startsWith('/')) {
+            return `${process.env.EXPO_PUBLIC_AWS_S3_URL}${url}`;
+        } else {
+            return `${process.env.EXPO_PUBLIC_AWS_S3_URL}/${url}`;
+        }
+    };
+
     // Update the message rendering to display images and documents
     const renderMessageContent = (msg: Message) => {
         const fileType = msg.fileType || (msg.file_type ? determineFileType(msg.file_type) : undefined);
         const fileUrl = msg.fileUrl || msg.file_url;
 
-        if (fileType === 'image' && fileUrl) {
-            // Ensure the URL is complete
-            const fullImageUrl = fileUrl.startsWith('http') ? fileUrl : `${process.env.EXPO_PUBLIC_AWS_S3_URL}/${fileUrl}`;
+        if (!fileUrl) {
+            return (
+                <Text className={`${isSender(msg.sender || msg.sender_id || '') ? 'text-white' : 'text-black'} font-Jakarta`}>
+                    {msg.message || msg.content}
+                </Text>
+            );
+        }
 
+        // Get full URL using the same approach as ReportViewer
+        const fullUrl = getFullUrl(fileUrl);
+        console.log('Rendering media with URL:', fullUrl); // Debug URL construction
+        const fileName = msg.fileName || extractFileName(fileUrl);
+
+        if (fileType === 'image') {
             return (
                 <TouchableOpacity
                     onPress={() => {
                         setViewerContent({
-                            fileUrl: fullImageUrl,
+                            fileUrl: fullUrl,
                             fileType: 'image/jpeg',
-                            title: msg.fileName || 'Image'
+                            title: fileName
                         });
                         setViewerVisible(true);
                     }}
-                    className="max-w-[192px]" // Constrain image width
                 >
                     <Image
-                        source={{ uri: fullImageUrl }}
-                        className="w-full h-[192px] rounded-lg"
+                        source={{ uri: fullUrl }}
+                        className="w-[180px] h-[180px] rounded-lg"
                         resizeMode="cover"
+                        onError={(error) => console.error('Image loading error:', error.nativeEvent.error)}
                     />
+                    <Text
+                        className={`text-xs ${isSender(msg.sender || msg.sender_id || '') ? 'text-white' : 'text-black'} mt-1`}
+                        numberOfLines={1}
+                    >
+                        {fileName}
+                    </Text>
                 </TouchableOpacity>
             );
-        } else if (fileType === 'pdf' && fileUrl) {
-            const fullPdfUrl = fileUrl.startsWith('http') ? fileUrl : `${process.env.EXPO_PUBLIC_AWS_S3_URL}/${fileUrl}`;
+        } else if (fileType === 'pdf') {
             return (
                 <TouchableOpacity
-                    style={{ backgroundColor: '#f0f0f0', padding: 12, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}
+                    className="flex-row items-center p-2"
                     onPress={() => {
                         setViewerContent({
-                            fileUrl: fullPdfUrl,
+                            fileUrl: fullUrl,
                             fileType: 'application/pdf',
-                            title: msg.fileName || 'Document'
+                            title: fileName
                         });
                         setViewerVisible(true);
                     }}
                 >
-                    <Ionicons name="document-text" size={24} color="#f40f02" />
-                    <Text style={{ marginLeft: 8, color: '#0066CC', fontFamily: 'JakartaMedium' }} numberOfLines={1}>
-                        {msg.fileName || extractFileName(fileUrl)}
+                    <Ionicons
+                        name="document-text"
+                        size={24}
+                        color={isSender(msg.sender || msg.sender_id || '') ? "#ffffff" : "#f40f02"}
+                    />
+                    <Text
+                        className={`ml-2 ${isSender(msg.sender || msg.sender_id || '') ? 'text-white' : 'text-blue-700'}`}
+                        numberOfLines={1}
+                    >
+                        {fileName}
                     </Text>
                 </TouchableOpacity>
             );
         } else {
             return (
-                <Text className={`${isSender(msg.sender || msg.sender_id || '') ? 'text-white' : 'text-black'}`}>
+                <Text className={`${isSender(msg.sender || msg.sender_id || '') ? 'text-white' : 'text-black'} font-Jakarta`}>
                     {msg.message || msg.content}
                 </Text>
             );

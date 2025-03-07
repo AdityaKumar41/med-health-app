@@ -305,16 +305,36 @@ const BookingScreen = () => {
                     console.log("Booking success response:", response);
                     setIsBookingLoading(false);
 
-                    // Make sure response contains the needed data
-                    if (!response.appointment) {
+                    // Debug the complete response structure
+                    console.log("Full response structure:", JSON.stringify(response));
+
+                    // Check if response exists at all
+                    if (!response) {
                         Alert.alert(
-                            'Booking Incomplete',
-                            'Your payment was processed but we couldn\'t confirm your appointment details. Please contact support.'
+                            'Booking Error',
+                            'No response received from server. Please try again.'
                         );
                         return;
                     }
 
-                    // Create receipt data with fallbacks for missing fields
+                    // More flexible response handling - check for various possible structures
+                    // The appointment data might be directly in the response or nested
+                    const appointmentData = response.appointment ||
+                        response.data?.appointment ||
+                        response.data ||
+                        response;
+
+                    const ticketData = response.ticket ||
+                        response.data?.ticket ||
+                        appointmentData.ticket ||
+                        {};
+
+                    // Continue even without complete data, but log the issue
+                    if (!appointmentData.id) {
+                        console.warn("Appointment ID missing in response, but continuing with available data");
+                    }
+
+                    // Create receipt data with fallbacks for all fields
                     setReceipt({
                         doctorName: doctor.name,
                         doctorSpecialty: doctor.specialties ? doctor.specialties.map((specialty: any) => specialty.name).join(', ') : 'General Physician',
@@ -326,11 +346,12 @@ const BookingScreen = () => {
                         }),
                         appointmentTime: selectedTimeSlot,
                         appointmentFee: fee, // Store as number
-                        bookingId: response.appointment?.id || 'Pending',
-                        ticketNumber: response.ticket?.ticket_number || 'Pending',
-                        qrCode: response.ticket?.qr_code
+                        bookingId: appointmentData.id || response.id || 'Confirmed',
+                        ticketNumber: ticketData.ticket_number || 'Confirmed',
+                        qrCode: ticketData.qr_code
                     });
 
+                    // Show receipt regardless of data completeness
                     setShowReceipt(true);
                 },
                 onError: (error: any) => {

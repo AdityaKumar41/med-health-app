@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { router } from "expo-router";
 import { MenuSectionProps } from "@/types/type";
 import { StatusBar } from "expo-status-bar";
-import { usePatient } from "@/hooks/usePatient";
+import { usePatient, usePatientUpdate } from "@/hooks/usePatient";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const Account = () => {
@@ -16,9 +16,28 @@ const Account = () => {
   const { data } = usePatient(address!);
   const { open } = useAppKit();
   const [isEditing, setIsEditing] = useState(false);
-  const [name, setName] = useState(data?.name || "xyz");
-  const [age, setAge] = useState(data?.age || "00");
-  const [profileImage, setProfileImage] = useState(data?.profile_picture || "https://cdn.builder.io/api/v1/image/assets/95a3c52e460440f58cf6776b478813ea/d6954879c6447b5b7d4cb004f31f770ede1b0a30c57fa508d0fbb42671a80517");
+
+  // Track profile data in state
+  const [profileData, setProfileData] = useState({
+    name: "",
+    email: "",
+    age: "",
+    profile_picture: ""
+  });
+
+  // Set initial data when available
+  useEffect(() => {
+    if (data) {
+      setProfileData({
+        name: data.name || "",
+        email: data.email || "",
+        age: data.age?.toString() || "",
+        profile_picture: data.profile_picture || "https://cdn.builder.io/api/v1/image/assets/95a3c52e460440f58cf6776b478813ea/d6954879c6447b5b7d4cb004f31f770ede1b0a30c57fa508d0fbb42671a80517"
+      });
+    }
+  }, [data]);
+
+  const { mutate, isPending: isSaving } = usePatientUpdate(address!);
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -29,16 +48,44 @@ const Account = () => {
     });
 
     if (!result.canceled) {
-      setProfileImage(result.assets[0].uri);
+      setProfileData(prev => ({
+        ...prev,
+        profile_picture: result.assets[0].uri
+      }));
     }
   };
 
   const handleEditToggle = () => {
-    setIsEditing(!isEditing);
     if (isEditing) {
-      // Save changes logic here
-      Alert.alert("Success", "Profile updated successfully!");
+      // Save changes
+      const formattedData = {
+        ...profileData,
+        age: parseInt(profileData.age, 10),
+        wallet_address: address || "",
+        blood_group: data?.blood_group || ""  // Keep blood group unchanged
+      };
+
+      mutate(formattedData as any, {
+        onSuccess: () => {
+          Alert.alert("Success", "Profile updated successfully!");
+          setIsEditing(false);
+        },
+        onError: (error) => {
+          console.error("Update failed:", error);
+          Alert.alert("Error", "Failed to update profile. Please try again.");
+        }
+      });
+    } else {
+      // Just toggle editing mode
+      setIsEditing(true);
     }
+  };
+
+  const updateField = (field: string, value: string) => {
+    setProfileData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   if (!address) {
@@ -48,7 +95,7 @@ const Account = () => {
   const userInfo = {
     totalAppointments: data?.appointments?.length || 0,
     totalReports: data?.reports?.length || 0,
-    age: age,
+    age: profileData.age,
   };
 
   const handleOnPress = () => {
@@ -66,6 +113,7 @@ const Account = () => {
           <TouchableOpacity
             onPress={handleEditToggle}
             className="bg-gray-100 p-2 rounded-full"
+            disabled={isSaving}
           >
             <Ionicons
               name={isEditing ? "checkmark" : "create-outline"}
@@ -87,7 +135,7 @@ const Account = () => {
                 className="relative"
               >
                 <Image
-                  source={{ uri: profileImage }}
+                  source={{ uri: profileData.profile_picture }}
                   className="w-24 h-24 rounded-full border-4 border-white shadow-sm"
                 />
                 {isEditing && (
@@ -99,12 +147,12 @@ const Account = () => {
 
               {isEditing ? (
                 <TextInput
-                  value={name}
-                  onChangeText={setName}
+                  value={profileData.name}
+                  onChangeText={(value) => updateField("name", value)}
                   className="font-JakartaBold text-2xl mt-2 text-center border-b border-gray-300 p-1"
                 />
               ) : (
-                <Text className="font-JakartaBold text-2xl mt-2">{name}</Text>
+                <Text className="font-JakartaBold text-2xl mt-2">{profileData.name}</Text>
               )}
 
               {isConnected && (
@@ -128,13 +176,30 @@ const Account = () => {
           <MenuSection
             title="Personal Information"
             items={[
-              { icon: "person", label: "Age", value: data?.age },
-              { icon: "mail", label: "Email", value: data?.email },
-              { icon: "water-outline", label: "Blood Group", value: data?.blood_group },
+              {
+                icon: "person",
+                label: "Age",
+                value: profileData.age,
+                editable: true
+              },
+              {
+                icon: "mail",
+                label: "Email",
+                value: profileData.email,
+                editable: true
+              },
+              {
+                icon: "water-outline",
+                label: "Blood Group",
+                value: data?.blood_group,
+                editable: false // Blood group is not editable
+              },
             ]}
             isEditing={isEditing}
             onValueChange={(label, value) => {
-              if (label === "Age") setAge(value);
+              if (label === "Age") updateField("age", value);
+              if (label === "Email") updateField("email", value);
+              // Blood group changes are ignored
             }}
           />
 
@@ -155,6 +220,15 @@ const Account = () => {
           </View>
         </View>
       </ScrollView>
+
+      {/* Loading indicator */}
+      {isSaving && (
+        <View className="absolute inset-0 bg-black/30 flex items-center justify-center">
+          <View className="bg-white p-4 rounded-lg">
+            <Text className="text-gray-800">Saving changes...</Text>
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 };
@@ -176,16 +250,16 @@ const MenuSection = ({ title, items, isEditing, onValueChange }: MenuSectionProp
       {items.map((item, index) => (
         <View
           key={index}
-          className={`flex-row items-center p-4 ${index < items.length - 1 ? "border-b border-gray-100" : ""
-            }`}
+          className={`flex-row items-center p-4 ${index < items.length - 1 ? "border-b border-gray-100" : ""}`}
         >
           <Ionicons name={item.icon} size={22} color="#4B5563" />
           <View className="flex-1 ml-3">
-            {isEditing && item.value ? (
+            {isEditing && item.value && item.editable !== false ? (
               <TextInput
                 className="text-gray-800 font-Jakarta text-base p-1 border-b border-gray-300"
                 defaultValue={item.value.toString()}
                 onChangeText={(text) => onValueChange?.(item.label, text)}
+                keyboardType={item.label === "Age" ? "number-pad" : "default"}
               />
             ) : (
               <>
@@ -196,7 +270,7 @@ const MenuSection = ({ title, items, isEditing, onValueChange }: MenuSectionProp
               </>
             )}
           </View>
-          {isEditing && item.value && (
+          {isEditing && item.value && item.editable !== false && (
             <Ionicons name="create-outline" size={20} color="#4B5563" />
           )}
         </View>

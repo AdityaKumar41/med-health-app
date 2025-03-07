@@ -11,8 +11,13 @@ declare interface InputFieldProps extends TextInputProps {
   iconStyle?: string;
   className?: string;
   placeholder: string;
-  value: string,
-  keyboardType?: 'default' | 'email-address' | 'numeric' | 'phone-pad' | undefined;
+  value: string;
+  keyboardType?:
+    | "default"
+    | "email-address"
+    | "numeric"
+    | "phone-pad"
+    | undefined;
   onChangeText?: (text: string) => void;
 }
 
@@ -34,7 +39,12 @@ export interface InputDetailType {
   key: keyof FormData;
   icon: string;
   secureTextEntry?: boolean;
-  keyboardType?: "default" | "email-address" | "numeric" | "phone-pad" | undefined;
+  keyboardType?:
+    | "default"
+    | "email-address"
+    | "numeric"
+    | "phone-pad"
+    | undefined;
 }
 
 export interface SpecialtyCardProps {
@@ -46,7 +56,6 @@ export interface SpecialtyCardProps {
 export interface SearchBarProps {
   placeholder: string;
 }
-
 
 export interface DoctorProps {
   name: string;
@@ -70,15 +79,14 @@ export interface MenuItem {
   value?: string;
 }
 
-
 export interface MenuSectionProps {
   title: string;
   items: {
     icon: any;
     label: string;
     value?: string | number;
+    isEditing?: boolean;
   }[];
-  isEditing?: boolean;
   onValueChange?: (label: string, value: string) => void;
 }
 
@@ -106,7 +114,6 @@ export interface SpecialityProps {
   description: string;
   icon?: string;
 }
-
 
 export interface ReportSchema {
   patient_id: string;

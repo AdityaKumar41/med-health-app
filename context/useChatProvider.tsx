@@ -1,5 +1,5 @@
 import { usePatient } from '@/hooks/usePatient';
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAccount } from 'wagmi';
 
@@ -33,8 +33,12 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
     const { address } = useAccount();
     const { data: patient } = usePatient(address!);
+    const socketInitialized = useRef(false);
 
     useEffect(() => {
+        // Prevent multiple socket connections
+        if (socketInitialized.current) return;
+
         try {
             const newSocket = io(process.env.EXPO_PUBLIC_SOCKET_URL!);
 
@@ -66,12 +70,14 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
             });
 
             setSocket(newSocket);
+            socketInitialized.current = true;
 
             return () => {
                 if (patient?.id) {
                     newSocket.emit('user-disconnected', { userId: patient.id });
                 }
                 newSocket.close();
+                socketInitialized.current = false;
             };
         } catch (error) {
             console.error('Socket initialization error:', error);
