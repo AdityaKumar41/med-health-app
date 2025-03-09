@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Image, ScrollView, TouchableOpacity, TextInput, Alert } from "react-native";
+import { View, Text, Image, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator } from "react-native";
 import * as ImagePicker from 'expo-image-picker';
 import { useAccount, useDisconnect } from "wagmi";
 import { Ionicons } from "@expo/vector-icons";
@@ -10,12 +10,15 @@ import { MenuSectionProps } from "@/types/type";
 import { StatusBar } from "expo-status-bar";
 import { usePatient, usePatientUpdate } from "@/hooks/usePatient";
 import { SafeAreaView } from "react-native-safe-area-context";
+import * as FileSystem from "expo-file-system";
+import { useSignedUrl } from "@/hooks/useAws";
 
 const Account = () => {
   const { address, isConnected } = useAccount();
   const { data } = usePatient(address!);
   const { open } = useAppKit();
   const [isEditing, setIsEditing] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // Track profile data in state
   const [profileData, setProfileData] = useState({
@@ -24,6 +27,9 @@ const Account = () => {
     age: "",
     profile_picture: ""
   });
+
+  // Get signed URL mutation
+  const { mutateAsync: getSignedUrl } = useSignedUrl(address!);
 
   // Set initial data when available
   useEffect(() => {
@@ -39,19 +45,73 @@ const Account = () => {
 
   const { mutate, isPending: isSaving } = usePatientUpdate(address!);
 
+  // Modified pickImage function to upload to AWS S3
   const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
 
-    if (!result.canceled) {
-      setProfileData(prev => ({
-        ...prev,
-        profile_picture: result.assets[0].uri
-      }));
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        return;
+      }
+
+      const selectedImage = result.assets[0];
+
+      // Start upload process
+      setIsUploadingImage(true);
+
+      // Extract file info
+      const fileName = selectedImage.uri.split('/').pop() || `image_${Date.now()}.jpg`;
+      const fileType = selectedImage.mimeType || 'image/jpeg';
+
+      try {
+        // Get the signed URL from AWS
+        const { url, key } = await getSignedUrl({
+          filename: fileName,
+          filetype: fileType
+        });
+
+        console.log('Got signed URL:', url);
+
+        // Upload to S3
+        const uploadResult = await FileSystem.uploadAsync(url, selectedImage.uri, {
+          httpMethod: 'PUT',
+          uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+          headers: {
+            'Content-Type': fileType,
+          }
+        });
+
+        console.log('Upload result:', uploadResult);
+
+        if (uploadResult.status !== 200) {
+          throw new Error('Failed to upload image to S3');
+        }
+
+        // Construct the final S3 URL for storage
+        const s3ImageUrl = `${process.env.EXPO_PUBLIC_AWS_S3_URL}/${key}`;
+        console.log('S3 image URL:', s3ImageUrl);
+
+        // Update profile data with the S3 URL
+        setProfileData(prev => ({
+          ...prev,
+          profile_picture: s3ImageUrl
+        }));
+
+        setIsUploadingImage(false);
+
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        setIsUploadingImage(false);
+        Alert.alert('Upload Failed', 'Failed to upload image. Please try again.');
+      }
+    } catch (error) {
+      console.error('Image picker error:', error);
+      Alert.alert('Error', 'Failed to pick image');
     }
   };
 
@@ -113,7 +173,7 @@ const Account = () => {
           <TouchableOpacity
             onPress={handleEditToggle}
             className="bg-gray-100 p-2 rounded-full"
-            disabled={isSaving}
+            disabled={isSaving || isUploadingImage}
           >
             <Ionicons
               name={isEditing ? "checkmark" : "create-outline"}
@@ -131,14 +191,21 @@ const Account = () => {
           <View className="bg-white rounded-3xl p-4 shadow-sm">
             <View className="items-center">
               <TouchableOpacity
-                onPress={isEditing ? pickImage : undefined}
+                onPress={isEditing && !isUploadingImage ? pickImage : undefined}
                 className="relative"
+                disabled={isUploadingImage}
               >
-                <Image
-                  source={{ uri: profileData.profile_picture }}
-                  className="w-24 h-24 rounded-full border-4 border-white shadow-sm"
-                />
-                {isEditing && (
+                {isUploadingImage ? (
+                  <View className="w-24 h-24 rounded-full border-4 border-white shadow-sm bg-gray-100 justify-center items-center">
+                    <ActivityIndicator size="small" color="#0066CC" />
+                  </View>
+                ) : (
+                  <Image
+                    source={{ uri: profileData.profile_picture }}
+                    className="w-24 h-24 rounded-full border-4 border-white shadow-sm"
+                  />
+                )}
+                {isEditing && !isUploadingImage && (
                   <View className="absolute bottom-0 right-0 bg-blue-500 rounded-full p-1">
                     <Ionicons name="camera" size={16} color="white" />
                   </View>
@@ -222,10 +289,13 @@ const Account = () => {
       </ScrollView>
 
       {/* Loading indicator */}
-      {isSaving && (
+      {(isSaving || isUploadingImage) && (
         <View className="absolute inset-0 bg-black/30 flex items-center justify-center">
           <View className="bg-white p-4 rounded-lg">
-            <Text className="text-gray-800">Saving changes...</Text>
+            <ActivityIndicator size="small" color="#0066cc" />
+            <Text className="text-gray-800 mt-2">
+              {isUploadingImage ? "Uploading image..." : "Saving changes..."}
+            </Text>
           </View>
         </View>
       )}

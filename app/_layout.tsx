@@ -20,6 +20,8 @@ import {
 import { ChatProvider } from "@/context/useChatProvider";
 import { NetworkProvider } from '@/context/NetworkContext';
 import { View } from "react-native";
+import * as Notifications from 'expo-notifications';
+import { router } from 'expo-router';
 
 // Prevent auto-hiding splash screen
 SplashScreen.preventAutoHideAsync().catch(() => {
@@ -61,6 +63,34 @@ createAppKit({
 // Create query client
 const queryClient = new QueryClient();
 
+// Configure notification handler for the app
+const configureNotifications = () => {
+  // Set notification handler
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    }),
+  });
+
+  // Listen for notification interactions
+  return Notifications.addNotificationResponseReceivedListener(response => {
+    const data = response.notification.request.content.data;
+
+    if (data.senderId) {
+      // Navigate to chat with this doctor when notification is tapped
+      router.push({
+        pathname: "/(root)/chating",
+        params: {
+          doctorId: data.senderId,
+          doctorName: data.senderName || 'Doctor'
+        }
+      });
+    }
+  });
+};
+
 export default function RootLayout() {
   const { isConnected } = useNetInfo();
 
@@ -82,6 +112,11 @@ export default function RootLayout() {
       });
     }
   }, [fontsLoaded]);
+
+  useEffect(() => {
+    const subscription = configureNotifications();
+    return () => subscription.remove();
+  }, []);
 
   if (!fontsLoaded) {
     return null; // Still loading fonts

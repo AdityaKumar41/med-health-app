@@ -41,6 +41,7 @@ const MedicalReports: React.FC = () => {
     const [uploading, setUploading] = useState(false);
     const navigation = useNavigation()
     const [showModal, setShowModal] = useState(false);
+    const [showMediaGallery, setShowMediaGallery] = useState(false); // Add state for media gallery modal
     const [formData, setFormData] = useState<ReportFormData>({
         title: '',
         description: '',
@@ -58,6 +59,10 @@ const MedicalReports: React.FC = () => {
 
     const handleUpload = async () => {
         setShowModal(true);
+    };
+
+    const handleOpenMediaGallery = () => {
+        setShowMediaGallery(true);
     };
 
     const handleSubmit = async () => {
@@ -207,7 +212,7 @@ const MedicalReports: React.FC = () => {
                     </TouchableOpacity>
                     <Text className="text-2xl font-JakartaBold text-gray-900">Medical Reports</Text>
                     <TouchableOpacity
-                        onPress={handleUpload}
+                        onPress={handleOpenMediaGallery}
                         disabled={uploading}
                         className="bg-blue-500 p-2 rounded-full"
                     >
@@ -268,6 +273,21 @@ const MedicalReports: React.FC = () => {
                     title={selectedReport.title}
                 />
             )}
+
+            {/* Media Gallery Modal */}
+            <MediaGalleryModal
+                visible={showMediaGallery}
+                onClose={() => setShowMediaGallery(false)}
+                reports={data?.reports || []}
+                onReportSelect={(report) => {
+                    setSelectedReport(report);
+                    setShowMediaGallery(false);
+                }}
+                onAddNew={() => {
+                    setShowMediaGallery(false);
+                    setShowModal(true);
+                }}
+            />
         </SafeAreaView>
     );
 };
@@ -296,91 +316,194 @@ const ReportFormModal = ({
     onDateChange
 }: ReportFormModalProps) => (
     <Modal visible={visible} animationType="slide" transparent>
-        <View className="flex-1 bg-black/50 justify-end">
-            <View className="bg-white rounded-t-3xl p-6">
-                <View className="flex-row justify-between items-center mb-6">
-                    <Text className="text-xl font-JakartaBold">Upload Medical Report</Text>
-                    <TouchableOpacity onPress={onClose}>
-                        <Ionicons name="close" size={24} color="#666" />
-                    </TouchableOpacity>
-                </View>
-
-                <ScrollView className="max-h-[500px]">
-                    <View className="space-y-4">
-                        <View>
-                            <Text className="font-JakartaMedium mb-2">Title *</Text>
-                            <TextInput
-                                className="border border-gray-200 rounded-lg p-3 font-Jakarta"
-                                value={formData.title}
-                                onChangeText={(text) => setFormData(prev => ({ ...prev, title: text }))}
-                                placeholder="Enter report title"
-                            />
-                        </View>
-
-                        <View>
-                            <Text className="font-JakartaMedium mb-2">Description</Text>
-                            <TextInput
-                                className="border border-gray-200 rounded-lg p-3 font-Jakarta"
-                                value={formData.description}
-                                onChangeText={(text) => setFormData(prev => ({ ...prev, description: text }))}
-                                placeholder="Enter description"
-                                multiline
-                                numberOfLines={3}
-                            />
-                        </View>
-
-                        <View>
-                            <Text className="font-JakartaMedium mb-2">Report Type *</Text>
-                            <TextInput
-                                className="border border-gray-200 rounded-lg p-3 font-Jakarta"
-                                value={formData.report_type}
-                                onChangeText={(text) => setFormData(prev => ({ ...prev, report_type: text }))}
-                                placeholder="e.g., Blood Test, X-Ray, etc."
-                            />
-                        </View>
-
-                        <View>
-                            <Text className="font-JakartaMedium mb-2">Report Date *</Text>
-                            <TextInput
-                                className="border border-gray-200 rounded-lg p-3 font-Jakarta"
-                                value={formData.report_date}
-                                onChangeText={onDateChange}
-                                placeholder="YYYY-MM-DD"
-                            />
-                        </View>
-
+        <SafeAreaView className="flex-1 bg-black/50" edges={['top', 'left', 'right']}>
+            <View className="flex-1 justify-end">
+                <View className="bg-white rounded-t-3xl p-6 pb-8">
+                    <View className="flex-row justify-between items-center py-3 mb-4">
+                        <Text className="text-xl font-JakartaBold">Upload Medical Report</Text>
                         <TouchableOpacity
-                            onPress={onPickDocument}
-                            className="border-2 border-dashed border-blue-500 rounded-lg p-4 items-center"
+                            onPress={onClose}
+                            className="h-12 w-12 rounded-full justify-center items-center"
+                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                         >
-                            <Ionicons name="cloud-upload" size={32} color="#0066CC" />
-                            <Text className="font-JakartaMedium text-blue-500 mt-2">
-                                {selectedFile && 'assets' in selectedFile && selectedFile.assets?.[0]
-                                    ? selectedFile.assets[0].name
-                                    : 'Select Document'}
-                            </Text>
+                            <Ionicons name="close-circle" size={32} color="#666" />
                         </TouchableOpacity>
                     </View>
-                </ScrollView>
 
-                <TouchableOpacity
-                    onPress={onSubmit}
-                    disabled={uploading || !formData.title || !formData.report_type || !selectedFile}
-                    className={`mt-6 rounded-lg p-4 items-center ${uploading || !formData.title || !formData.report_type || !selectedFile
-                        ? 'bg-gray-300'
-                        : 'bg-blue-600'
-                        }`}
-                >
-                    {uploading ? (
-                        <ActivityIndicator color="white" />
-                    ) : (
-                        <Text className="font-JakartaBold text-white">Upload Report</Text>
-                    )}
-                </TouchableOpacity>
+                    <ScrollView className="max-h-[500px]">
+                        <View className="space-y-4">
+                            <View>
+                                <Text className="font-JakartaMedium mb-2">Title *</Text>
+                                <TextInput
+                                    className="border border-gray-200 rounded-lg p-3 font-Jakarta"
+                                    value={formData.title}
+                                    onChangeText={(text) => setFormData(prev => ({ ...prev, title: text }))}
+                                    placeholder="Enter report title"
+                                />
+                            </View>
+
+                            <View>
+                                <Text className="font-JakartaMedium mb-2">Description</Text>
+                                <TextInput
+                                    className="border border-gray-200 rounded-lg p-3 font-Jakarta"
+                                    value={formData.description}
+                                    onChangeText={(text) => setFormData(prev => ({ ...prev, description: text }))}
+                                    placeholder="Enter description"
+                                    multiline
+                                    numberOfLines={3}
+                                />
+                            </View>
+
+                            <View>
+                                <Text className="font-JakartaMedium mb-2">Report Type *</Text>
+                                <TextInput
+                                    className="border border-gray-200 rounded-lg p-3 font-Jakarta"
+                                    value={formData.report_type}
+                                    onChangeText={(text) => setFormData(prev => ({ ...prev, report_type: text }))}
+                                    placeholder="e.g., Blood Test, X-Ray, etc."
+                                />
+                            </View>
+
+                            <View>
+                                <Text className="font-JakartaMedium mb-2">Report Date *</Text>
+                                <TextInput
+                                    className="border border-gray-200 rounded-lg p-3 font-Jakarta"
+                                    value={formData.report_date}
+                                    onChangeText={onDateChange}
+                                    placeholder="YYYY-MM-DD"
+                                />
+                            </View>
+
+                            <TouchableOpacity
+                                onPress={onPickDocument}
+                                className="border-2 border-dashed border-blue-500 rounded-lg p-4 items-center"
+                            >
+                                <Ionicons name="cloud-upload" size={32} color="#0066CC" />
+                                <Text className="font-JakartaMedium text-blue-500 mt-2">
+                                    {selectedFile && 'assets' in selectedFile && selectedFile.assets?.[0]
+                                        ? selectedFile.assets[0].name
+                                        : 'Select Document'}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </ScrollView>
+
+                    <TouchableOpacity
+                        onPress={onSubmit}
+                        disabled={uploading || !formData.title || !formData.report_type || !selectedFile}
+                        className={`mt-6 rounded-lg p-5 items-center ${uploading || !formData.title || !formData.report_type || !selectedFile
+                            ? 'bg-gray-300'
+                            : 'bg-blue-600'
+                            }`}
+                        activeOpacity={0.7}
+                    >
+                        {uploading ? (
+                            <ActivityIndicator color="white" />
+                        ) : (
+                            <Text className="font-JakartaBold text-white">Upload Report</Text>
+                        )}
+                    </TouchableOpacity>
+                </View>
             </View>
-        </View>
+        </SafeAreaView>
     </Modal>
 );
+
+interface MediaGalleryModalProps {
+    visible: boolean;
+    onClose: () => void;
+    reports: Report[];
+    onReportSelect: (report: Report) => void;
+    onAddNew: () => void;
+}
+
+const MediaGalleryModal = ({
+    visible,
+    onClose,
+    reports,
+    onReportSelect,
+    onAddNew
+}: MediaGalleryModalProps) => {
+    return (
+        <Modal visible={visible} animationType="slide" transparent>
+            <SafeAreaView className="flex-1 bg-black/50" edges={['top', 'left', 'right']}>
+                <View className="flex-1 justify-end">
+                    <View className="bg-white rounded-t-3xl h-[80%] pb-6">
+                        {/* Header with improved touchable area for close button */}
+                        <View className="flex-row justify-between items-center py-6 px-5 border-b border-gray-200">
+                            <Text className="text-xl font-JakartaBold">Media Gallery</Text>
+                            <TouchableOpacity
+                                onPress={onClose}
+                                className="h-12 w-12 rounded-full justify-center items-center" // Circular touch area
+                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} // Extend touch area
+                            >
+                                <Ionicons name="close-circle" size={32} color="#666" />
+                            </TouchableOpacity>
+                        </View>
+
+                        <ScrollView className="flex-1 p-4 pb-8" contentContainerStyle={{ paddingBottom: 20 }}>
+                            {reports.length > 0 ? (
+                                <View className="flex-row flex-wrap justify-between">
+                                    {reports.map((report, index) => (
+                                        <TouchableOpacity
+                                            key={index}
+                                            className="w-[48%] bg-gray-100 rounded-lg mb-4 overflow-hidden shadow-sm"
+                                            onPress={() => onReportSelect(report)}
+                                            activeOpacity={0.7}
+                                        >
+                                            <View className="h-32 bg-blue-100 justify-center items-center">
+                                                <Ionicons
+                                                    name={report.file_type.includes('pdf') ? "document-text" : "image"}
+                                                    size={40}
+                                                    color="#0066CC"
+                                                />
+                                            </View>
+                                            <View className="p-3">
+                                                <Text numberOfLines={1} className="font-JakartaBold text-gray-800">
+                                                    {report.title}
+                                                </Text>
+                                                <Text className="font-Jakarta text-gray-500 text-xs mt-1">
+                                                    {new Date(report.report_date).toLocaleDateString()}
+                                                </Text>
+                                            </View>
+                                        </TouchableOpacity>
+                                    ))}
+
+                                    {/* Add new report tile */}
+                                    <TouchableOpacity
+                                        className="w-[48%] bg-gray-100 rounded-lg mb-4 border-2 border-dashed border-blue-500 h-32 justify-center items-center shadow-sm"
+                                        onPress={onAddNew}
+                                        activeOpacity={0.7}
+                                    >
+                                        <Ionicons name="add-circle" size={40} color="#0066CC" />
+                                        <Text className="font-JakartaMedium text-blue-500 mt-2">Add New</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            ) : (
+                                <View className="flex-1 justify-center items-center py-20">
+                                    <View className="bg-blue-100 p-4 rounded-full mb-4">
+                                        <Ionicons name="images" size={32} color="#0066CC" />
+                                    </View>
+                                    <Text className="font-JakartaBold text-lg text-gray-800 mb-2">No Media Yet</Text>
+                                    <Text className="font-Jakarta text-gray-500 text-center px-10 mb-4">
+                                        Upload your medical reports to keep track of your health records
+                                    </Text>
+                                    <TouchableOpacity
+                                        className="bg-blue-600 py-3 px-6 rounded-lg"
+                                        onPress={onAddNew}
+                                        activeOpacity={0.7}
+                                    >
+                                        <Text className="font-JakartaBold text-white">Upload Report</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+                        </ScrollView>
+                    </View>
+                </View>
+            </SafeAreaView>
+        </Modal>
+    );
+};
 
 const ReportCard = ({ report, onPress }: { report: Report, onPress: () => void }) => (
     <TouchableOpacity

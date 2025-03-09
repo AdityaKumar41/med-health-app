@@ -86,6 +86,7 @@ export interface MenuSectionProps {
     label: string;
     value?: string | number;
     isEditing?: boolean;
+    editable?: boolean;
   }[];
   onValueChange?: (label: string, value: string) => void;
 }

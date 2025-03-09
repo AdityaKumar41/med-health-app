@@ -2,6 +2,17 @@ import { usePatient } from '@/hooks/usePatient';
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAccount } from 'wagmi';
+import * as Notifications from 'expo-notifications';
+import { Platform } from 'react-native';
+
+// Setup notifications configuration
+Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+    }),
+});
 
 interface ChatMessage {
     sender: string;
@@ -10,14 +21,18 @@ interface ChatMessage {
     file_url?: string;
     file_type?: string;
     timestamp: Date;
+    sender_name?: string; // Add this for notifications
 }
 
 interface ChatContextType {
     socket: Socket | null;
     sendMessage: (receiverId: string, message: string, file_url?: string, file_type?: string) => void;
-    onlineUsers: Set<string>;  // Add this
-    setUserOnline: (userId: string) => void;  // Add this
-    setUserOffline: (userId: string) => void;  // Add this
+    onlineUsers: Set<string>;
+    setUserOnline: (userId: string) => void;
+    setUserOffline: (userId: string) => void;
+    activeChat: string | null; // Track active chat
+    setActiveChat: (chatId: string | null) => void;
+    requestNotificationPermissions: () => Promise<boolean>;
 }
 
 const ChatContext = createContext<ChatContextType>({
@@ -26,14 +41,70 @@ const ChatContext = createContext<ChatContextType>({
     onlineUsers: new Set(),
     setUserOnline: () => { },
     setUserOffline: () => { },
+    activeChat: null,
+    setActiveChat: () => { },
+    requestNotificationPermissions: async () => false,
 });
 
 export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     const [socket, setSocket] = useState<Socket | null>(null);
     const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
+    const [activeChat, setActiveChat] = useState<string | null>(null);
+    const [hasNotificationPermission, setHasNotificationPermission] = useState(false);
+
     const { address } = useAccount();
     const { data: patient } = usePatient(address!);
     const socketInitialized = useRef(false);
+
+    // Request notification permissions
+    const requestNotificationPermissions = async () => {
+        try {
+            if (Platform.OS === 'android') {
+                await Notifications.setNotificationChannelAsync('chat-messages', {
+                    name: 'Chat Messages',
+                    importance: Notifications.AndroidImportance.MAX,
+                    vibrationPattern: [0, 250, 250, 250],
+                    lightColor: '#0066CC',
+                });
+            }
+
+            const { status: existingStatus } = await Notifications.getPermissionsAsync();
+            let finalStatus = existingStatus;
+
+            if (existingStatus !== 'granted') {
+                const { status } = await Notifications.requestPermissionsAsync();
+                finalStatus = status;
+            }
+
+            const granted = finalStatus === 'granted';
+            setHasNotificationPermission(granted);
+            return granted;
+        } catch (error) {
+            console.error('Error requesting notification permissions:', error);
+            return false;
+        }
+    };
+
+    // Request permissions on mount
+    useEffect(() => {
+        requestNotificationPermissions();
+    }, []);
+
+    // Configure notification handling
+    useEffect(() => {
+        // Handle notification responses (when user taps notification)
+        const notificationSubscription = Notifications.addNotificationResponseReceivedListener(response => {
+            const data = response.notification.request.content.data;
+
+            // Navigate to chat with this sender when notification is tapped
+            if (data.senderId) {
+                // We'll use this in the ChatRoom component to navigate
+                console.log('Notification tapped with senderId:', data.senderId);
+            }
+        });
+
+        return () => notificationSubscription.remove();
+    }, []);
 
     useEffect(() => {
         // Prevent multiple socket connections
@@ -69,6 +140,48 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
                 });
             });
 
+            // Listen for private messages and show notifications if not in active chat
+            newSocket.on('private-message', async (message: ChatMessage) => {
+                // Only show notification if:
+                // 1. Message is received by current user (patient)
+                // 2. We're not actively chatting with the sender
+                // 3. We have notification permission
+                if (
+                    patient?.id &&
+                    message.receiver === patient.id &&
+                    message.sender !== activeChat &&
+                    hasNotificationPermission
+                ) {
+                    const senderName = message.sender_name || 'Doctor';
+                    const notificationTitle = `New message from ${senderName}`;
+
+                    // Format notification body based on message type
+                    let notificationBody = message.message;
+                    if (message.file_url) {
+                        if (message.file_type?.includes('image')) {
+                            notificationBody = '📷 Sent you an image';
+                        } else if (message.file_type?.includes('pdf')) {
+                            notificationBody = '📄 Sent you a document';
+                        } else {
+                            notificationBody = '📎 Sent you a file';
+                        }
+                    }
+
+                    // Show notification
+                    await Notifications.scheduleNotificationAsync({
+                        content: {
+                            title: notificationTitle,
+                            body: notificationBody,
+                            data: {
+                                senderId: message.sender,
+                                senderName: senderName,
+                            },
+                        },
+                        trigger: null, // null means show immediately
+                    });
+                }
+            });
+
             setSocket(newSocket);
             socketInitialized.current = true;
 
@@ -82,7 +195,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         } catch (error) {
             console.error('Socket initialization error:', error);
         }
-    }, [patient?.id]);
+    }, [patient?.id, activeChat, hasNotificationPermission]);
 
     const setUserOnline = (userId: string) => {
         setOnlineUsers(prev => new Set([...prev, userId]));
@@ -108,7 +221,8 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
             message,
             timestamp: new Date(),
             file_url,
-            file_type
+            file_type,
+            sender_name: patient.name // Include sender name for notifications
         };
 
         try {
@@ -125,7 +239,10 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
             sendMessage,
             onlineUsers,
             setUserOnline,
-            setUserOffline
+            setUserOffline,
+            activeChat,
+            setActiveChat,
+            requestNotificationPermissions
         }}>
             {children}
         </ChatContext.Provider>

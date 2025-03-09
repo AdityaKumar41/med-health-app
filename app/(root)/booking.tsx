@@ -975,7 +975,7 @@ const BookingScreen = () => {
                             <View className="flex-row justify-between items-center bg-gray-50 p-4 rounded-xl mb-6">
                                 <Text className="text-gray-600 font-JakartaBold">Consultation Fee:</Text>
                                 <Text className="text-xl font-JakartaBold text-blue-600">
-                                    ₹{receipt?.appointmentFee}
+                                    POL {receipt?.appointmentFee}
                                 </Text>
                             </View>
 
